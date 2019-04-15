@@ -49,6 +49,16 @@ public class SkillEngineApplicationTests {
 	}
 	
 	@Test
+	public void importOccupationIscoGroup() throws IOException {
+		csvManager.importOccupationIscoGroup("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\ISCOGroups_it.csv");
+	}
+	
+	@Test
+	public void importOccupationRelations() throws IOException {
+		csvManager.importOccupationRelations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\broaderRelationsOccPillar.csv");
+	}
+	
+	@Test
 	public void importOccupationSkillRelations() throws IOException {
 		csvManager.importOccupationSkillRelations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\occupationSkillRelations.csv");
 	}
@@ -66,6 +76,11 @@ public class SkillEngineApplicationTests {
 	@Test
 	public void indexOccupations() throws IOException {
 		csvManager.indexOccupations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\occupations_it.csv");
+	}
+	
+	@Test
+	public void indexOccupationIscoGroups() throws IOException {
+		csvManager.indexOccupationIscoGroups("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\ISCOGroups_it.csv");
 	}
 	
 	@Test
