@@ -34,15 +34,14 @@ public class SearchController {
 
 	@GetMapping(value = "/api/search/label")
 	public List<TextDoc> searchByLabel(
-			@RequestParam(required = false) String concetType,
+			@RequestParam(required = false) String conceptType,
 			@RequestParam String text) throws Exception {
 		List<TextDoc> result = null;
 		text = StringUtils.strip(text);
-		if(StringUtils.isEmpty(concetType)) {
-			result = luceneManager.searchByLabel(text, 20, "preferredLabel", "altLabels");
+		if(StringUtils.isEmpty(conceptType)) {
+			result = luceneManager.searchByLabel(text, 20, "text");
 		} else {
-			result = luceneManager.searchByLabelAndType(text, concetType, 20, 
-					"preferredLabel", "altLabels");
+			result = luceneManager.searchByLabelAndType(text, conceptType, 20, "text");
 		}
 		logger.debug("searchByLabel:{} / {}", result.size(), text);
 		return result;

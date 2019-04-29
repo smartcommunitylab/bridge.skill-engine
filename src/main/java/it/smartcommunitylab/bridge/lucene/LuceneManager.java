@@ -5,9 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -35,6 +33,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.util.CoreMap;
+import eu.fbk.dh.tint.runner.TintPipeline;
 import it.smartcommunitylab.bridge.model.TextDoc;
 
 @Component
@@ -44,6 +48,8 @@ public class LuceneManager {
 	@Autowired
 	@Value("${lucene.index.path}")
 	private String indexPath;
+	
+	private TintPipeline pipeline;
 
 	private Analyzer analyzer;
 	private Directory directory;
@@ -66,6 +72,11 @@ public class LuceneManager {
     iwriter.commit();
     ireader = DirectoryReader.open(directory);
     isearcher = new IndexSearcher(ireader);
+    
+    pipeline = new TintPipeline();
+    pipeline.loadDefaultProperties();
+    pipeline.setProperty("annotators", "ita_toksent, pos, ita_morpho, ita_lemma");
+    pipeline.load();
 	}
 	
 	@PreDestroy
@@ -73,6 +84,24 @@ public class LuceneManager {
 		iwriter.close();
 		ireader.close();
     directory.close();
+	}
+	
+	public String normalizeText(String...strings) {
+		StringBuffer sb = new StringBuffer();
+		for (String text : strings) {
+			Annotation stanfordAnnotation = pipeline.runRaw(text);
+			for(CoreMap sentence : stanfordAnnotation.get(SentencesAnnotation.class)) {
+				for(CoreLabel token : sentence.get(TokensAnnotation.class)) {
+					if(token.lemma().equalsIgnoreCase("[PUNCT]")) {
+						continue;
+					}
+					sb.append(token.lemma());
+					sb.append(" ");
+				}
+				sb.append("\n");
+			}
+		}
+		return sb.toString();
 	}
 	
 	public void indexDocuments(List<Document> docs) throws IOException {
@@ -84,11 +113,8 @@ public class LuceneManager {
 	}
 	
 	public List<TextDoc> searchByLabel(String text, int maxResult, String... field) throws ParseException, IOException {
-		Map<String, Float> boosts = new HashMap<String, Float>();
-		boosts.put("preferredLabel", Float.valueOf(1.5f));
-		boosts.put("altLabels", Float.valueOf(1.0f));
-		QueryParser parser = new MultiFieldQueryParser(field, analyzer, boosts);
-		Query query = parser.parse(QueryParser.escape(text));
+		QueryParser parser = new MultiFieldQueryParser(field, analyzer);
+		Query query = parser.parse(QueryParser.escape(normalizeText(text)));
 		ScoreDoc[] hits = isearcher.search(query, maxResult).scoreDocs;
 		List<TextDoc> result = new ArrayList<TextDoc>();
 		for(ScoreDoc scoreDoc : hits) {
@@ -108,11 +134,8 @@ public class LuceneManager {
 	
 	public List<TextDoc> searchByLabelAndType(String text, String concetType, 
 			int maxResult, String... field) throws ParseException, IOException {
-		Map<String, Float> boosts = new HashMap<String, Float>();
-		boosts.put("preferredLabel", Float.valueOf(1.5f));
-		boosts.put("altLabels", Float.valueOf(1.0f));
-		QueryParser parser = new MultiFieldQueryParser(field, analyzer, boosts);
-		Query fieldQuery = parser.parse(QueryParser.escape(text));
+		QueryParser parser = new MultiFieldQueryParser(field, analyzer);
+		Query fieldQuery = parser.parse(QueryParser.escape(normalizeText(text)));
 		
 		SimpleQueryParser simpleParser = new SimpleQueryParser(analyzer, "conceptType");
 		Query typeQuery = simpleParser.parse(concetType);

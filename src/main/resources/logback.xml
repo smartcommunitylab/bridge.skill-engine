@@ -51,6 +51,14 @@
 
   <logger name="org.eclipse.jetty" level="INFO" additivity="false">
     <appender-ref ref="FILE" />
+  </logger>
+  		
+  <logger name="edu.stanford.nlp" level="WARN" additivity="false">
+    <appender-ref ref="FILE" />
+  </logger>
+  		
+  <logger name="eu.fbk.dh.tint" level="ERROR" additivity="false">
+    <appender-ref ref="FILE" />
   </logger>		
 
 </configuration>
