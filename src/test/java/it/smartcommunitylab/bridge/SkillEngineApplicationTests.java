@@ -30,12 +30,16 @@ public class SkillEngineApplicationTests {
 	
 	@Test
 	public void importSkills() throws IOException {
-		csvManager.importSkills("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skills_it.csv");
+		csvManager.importSkills("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skills_it.csv", "it");
+		csvManager.importSkills("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skills_en.csv", "en");
+		csvManager.importSkills("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skills_fr.csv", "fr");
 	}
 	
 	@Test
 	public void importSkillGroups() throws IOException {
-		csvManager.importSkillGroups("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skillGroups_it.csv");
+		csvManager.importSkillGroups("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skillGroups_it.csv", "it");
+		csvManager.importSkillGroups("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skillGroups_en.csv", "en");
+		csvManager.importSkillGroups("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\skillGroups_fr.csv", "fr");
 	}
 	
 	@Test
@@ -45,12 +49,16 @@ public class SkillEngineApplicationTests {
 	
 	@Test
 	public void importOccupations() throws IOException {
-		csvManager.importOccupations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\occupations_it.csv");
+		csvManager.importOccupations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\occupations_it.csv", "it");
+		csvManager.importOccupations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\occupations_en.csv", "en");
+		csvManager.importOccupations("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\occupations_fr.csv", "fr");
 	}
 	
 	@Test
 	public void importOccupationIscoGroup() throws IOException {
-		csvManager.importOccupationIscoGroup("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\ISCOGroups_it.csv");
+		csvManager.importOccupationIscoGroup("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\ISCOGroups_it.csv", "it");
+		csvManager.importOccupationIscoGroup("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\ISCOGroups_en.csv", "en");
+		csvManager.importOccupationIscoGroup("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\esco\\v1.0.3\\ISCOGroups_fr.csv", "fr");
 	}
 	
 	@Test

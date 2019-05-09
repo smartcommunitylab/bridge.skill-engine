@@ -1,7 +1,9 @@
 package it.smartcommunitylab.bridge.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 
@@ -9,9 +11,9 @@ public class Skill {
 	@Id
 	private String uri;
 	private String conceptType;
-	private String preferredLabel;
-	private String altLabels;
-	private String description;
+	private Map<String, String> preferredLabel = new HashMap<>();
+	private Map<String, String> altLabels = new HashMap<>();
+	private Map<String, String> description = new HashMap<>();
 	private List<String> broaderSkill = new ArrayList<String>();
 	private List<String> narrowerSkill = new ArrayList<String>();
 	private List<String> isEssentialForOccupation = new ArrayList<String>();
@@ -40,23 +42,11 @@ public class Skill {
 	public void setConceptType(String conceptType) {
 		this.conceptType = conceptType;
 	}
-	public String getPreferredLabel() {
-		return preferredLabel;
-	}
-	public void setPreferredLabel(String preferredLabel) {
-		this.preferredLabel = preferredLabel;
-	}
 	public String getUri() {
 		return uri;
 	}
 	public void setUri(String uri) {
 		this.uri = uri;
-	}
-	public String getDescription() {
-		return description;
-	}
-	public void setDescription(String description) {
-		this.description = description;
 	}
 	public List<String> getIsEssentialForOccupation() {
 		return isEssentialForOccupation;
@@ -82,10 +72,28 @@ public class Skill {
 	public void setNarrowerSkill(List<String> narrowerSkill) {
 		this.narrowerSkill = narrowerSkill;
 	}
-	public String getAltLabels() {
+
+	public Map<String, String> getPreferredLabel() {
+		return preferredLabel;
+	}
+
+	public void setPreferredLabel(Map<String, String> preferredLabel) {
+		this.preferredLabel = preferredLabel;
+	}
+
+	public Map<String, String> getAltLabels() {
 		return altLabels;
 	}
-	public void setAltLabels(String altLabels) {
+
+	public void setAltLabels(Map<String, String> altLabels) {
 		this.altLabels = altLabels;
+	}
+
+	public Map<String, String> getDescription() {
+		return description;
+	}
+
+	public void setDescription(Map<String, String> description) {
+		this.description = description;
 	}
 }

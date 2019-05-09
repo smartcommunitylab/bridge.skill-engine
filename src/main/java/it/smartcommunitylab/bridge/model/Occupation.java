@@ -1,7 +1,9 @@
 package it.smartcommunitylab.bridge.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 
@@ -9,9 +11,9 @@ public class Occupation {
 	@Id
 	private String uri;
 	private String conceptType;
-	private String preferredLabel;
-	private String altLabels;
-	private String description;
+	private Map<String, String> preferredLabel = new HashMap<>();
+	private Map<String, String> altLabels = new HashMap<>();
+	private Map<String, String> description = new HashMap<>();
 	private String broaderIscoGroup;
 	private String iscoCode;
 	private List<String> hasEssentialSkill = new ArrayList<String>();
@@ -49,18 +51,6 @@ public class Occupation {
 	public void setUri(String uri) {
 		this.uri = uri;
 	}
-	public String getPreferredLabel() {
-		return preferredLabel;
-	}
-	public void setPreferredLabel(String preferredLabel) {
-		this.preferredLabel = preferredLabel;
-	}
-	public String getDescription() {
-		return description;
-	}
-	public void setDescription(String description) {
-		this.description = description;
-	}
 	public String getBroaderIscoGroup() {
 		return broaderIscoGroup;
 	}
@@ -91,12 +81,6 @@ public class Occupation {
 	public void setBroaderOccupation(List<String> broaderOccupation) {
 		this.broaderOccupation = broaderOccupation;
 	}
-	public String getAltLabels() {
-		return altLabels;
-	}
-	public void setAltLabels(String altLabels) {
-		this.altLabels = altLabels;
-	}
 	public String getIscoCode() {
 		return iscoCode;
 	}
@@ -110,5 +94,29 @@ public class Occupation {
 
 	public void setTotalSkill(List<String> totalSkill) {
 		this.totalSkill = totalSkill;
+	}
+
+	public Map<String, String> getPreferredLabel() {
+		return preferredLabel;
+	}
+
+	public void setPreferredLabel(Map<String, String> preferredLabel) {
+		this.preferredLabel = preferredLabel;
+	}
+
+	public Map<String, String> getAltLabels() {
+		return altLabels;
+	}
+
+	public void setAltLabels(Map<String, String> altLabels) {
+		this.altLabels = altLabels;
+	}
+
+	public Map<String, String> getDescription() {
+		return description;
+	}
+
+	public void setDescription(Map<String, String> description) {
+		this.description = description;
 	}
 }

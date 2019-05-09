@@ -36,7 +36,7 @@ public class CsvManager {
 	@Autowired
 	private OccupationRepository occupationRepository;
 	
-	public void importSkills(String csvFilePath) throws IOException {
+	public void importSkills(String csvFilePath, String lang) throws IOException {
 		Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));
 		CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader("conceptType",
 				"conceptUri","skillType","reuseLevel","preferredLabel","altLabels",
@@ -48,20 +48,26 @@ public class CsvManager {
 			String preferredLabel = record.get("preferredLabel");
 			String altLabels = record.get("altLabels");
 			String description = record.get("description");
-			Skill skill = new Skill();
-			skill.setUri(uri);
-			skill.setConceptType(conceptType);
-			skill.setPreferredLabel(preferredLabel);
-			skill.setAltLabels(altLabels);
-			skill.setDescription(description);
+			Skill skill = null;
+			Optional<Skill> optionalSkill = skillRepository.findById(uri);
+			if(optionalSkill.isEmpty()) {
+				skill = new Skill();
+				skill.setUri(uri);
+				skill.setConceptType(conceptType);
+			} else {
+				skill = optionalSkill.get();
+			}
+			skill.getPreferredLabel().put(lang, preferredLabel);
+			skill.getAltLabels().put(lang, altLabels);
+			skill.getDescription().put(lang, description);
 			skillRepository.save(skill);
-			logger.info("importSkills:{}", uri);
+			logger.info("importSkills:{}/{}", lang, uri);
 		}
 		csvParser.close();
 		reader.close();
 	}
 	
-	public void importSkillGroups(String csvFilePath) throws IOException {
+	public void importSkillGroups(String csvFilePath, String lang) throws IOException {
 		Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));
 		CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader("conceptType","conceptUri",
 				"preferredLabel","altLabels","description").withSkipHeaderRecord();
@@ -72,14 +78,20 @@ public class CsvManager {
 			String preferredLabel = record.get("preferredLabel");
 			String altLabels = record.get("altLabels");
 			String description = record.get("description");
-			Skill skill = new Skill();
-			skill.setUri(uri);
-			skill.setConceptType(conceptType);
-			skill.setPreferredLabel(preferredLabel);
-			skill.setAltLabels(altLabels);
-			skill.setDescription(description);
+			Skill skill = null;
+			Optional<Skill> optionalSkill = skillRepository.findById(uri);
+			if(optionalSkill.isEmpty()) {
+				skill = new Skill();
+				skill.setUri(uri);
+				skill.setConceptType(conceptType);
+			} else {
+				skill = optionalSkill.get();
+			}
+			skill.getPreferredLabel().put(lang, preferredLabel);
+			skill.getAltLabels().put(lang, altLabels);
+			skill.getDescription().put(lang, description);
 			skillRepository.save(skill);
-			logger.info("importSkillGroups:{}", uri);
+			logger.info("importSkillGroups:{}/{}", lang, uri);
 		}
 		csvParser.close();
 		reader.close();
@@ -109,13 +121,13 @@ public class CsvManager {
 				broaderSkill.getNarrowerSkill().add(skillUri);
 				skillRepository.save(broaderSkill);
 			}
-			logger.info("add skill relation:{} / {}", skillUri, broaderSkillUri);
+			logger.info("importSkillRelations:{}/{}", skillUri, broaderSkillUri);
 		}
 		csvParser.close();
 		reader.close();	
 	}
 	
-	public void importOccupations(String csvFilePath) throws IOException {
+	public void importOccupations(String csvFilePath, String lang) throws IOException {
 		Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));
 		CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader("conceptType",
 				"conceptUri","iscoGroup","preferredLabel","altLabels",
@@ -128,21 +140,27 @@ public class CsvManager {
 			String altLabels = record.get("altLabels");
 			String description = record.get("description");
 			String iscoGroup = record.get("iscoGroup");
-			Occupation occupation = new Occupation();
-			occupation.setUri(uri);
-			occupation.setConceptType(conceptType);
-			occupation.setPreferredLabel(preferredLabel);
-			occupation.setAltLabels(altLabels);
-			occupation.setDescription(description);
-			occupation.setIscoCode(iscoGroup);
+			Occupation occupation = null;
+			Optional<Occupation> optionalOccupation = occupationRepository.findById(uri);
+			if(optionalOccupation.isEmpty()) {
+				occupation = new Occupation();
+				occupation.setUri(uri);
+				occupation.setConceptType(conceptType);
+				occupation.setIscoCode(iscoGroup);
+			} else {
+				occupation = optionalOccupation.get();
+			}
+			occupation.getPreferredLabel().put(lang, preferredLabel);
+			occupation.getAltLabels().put(lang, altLabels);
+			occupation.getDescription().put(lang, description);
 			occupationRepository.save(occupation);
-			logger.info("importOccupations:{}", uri);
+			logger.info("importOccupations:{}/{}", lang, uri);
 		}
 		csvParser.close();
 		reader.close();
 	}
 	
-	public void importOccupationIscoGroup(String csvFilePath) throws IOException {
+	public void importOccupationIscoGroup(String csvFilePath, String lang) throws IOException {
 		Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));
 		CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader("conceptType",
 				"conceptUri","code","preferredLabel","altLabels",
@@ -155,15 +173,21 @@ public class CsvManager {
 			String altLabels = record.get("altLabels");
 			String description = record.get("description");
 			String iscoGroup = record.get("code");
-			Occupation occupation = new Occupation();
-			occupation.setUri(uri);
-			occupation.setConceptType(conceptType);
-			occupation.setPreferredLabel(preferredLabel);
-			occupation.setAltLabels(altLabels);
-			occupation.setDescription(description);
-			occupation.setIscoCode(iscoGroup);
+			Occupation occupation = null;
+			Optional<Occupation> optionalOccupation = occupationRepository.findById(uri);
+			if(optionalOccupation.isEmpty()) {
+				occupation = new Occupation();
+				occupation.setUri(uri);
+				occupation.setConceptType(conceptType);
+				occupation.setIscoCode(iscoGroup);
+			} else {
+				occupation = optionalOccupation.get();
+			}
+			occupation.getPreferredLabel().put(lang, preferredLabel);
+			occupation.getAltLabels().put(lang, altLabels);
+			occupation.getDescription().put(lang, description);
 			occupationRepository.save(occupation);
-			logger.info("importOccupationIscoGroup:{}", uri);
+			logger.info("importOccupationIscoGroup:{}/{}", lang, uri);
 		}
 		csvParser.close();
 		reader.close();
@@ -193,7 +217,7 @@ public class CsvManager {
 				broaderOccupation.getNarrowerOccupation().add(occUri);
 				occupationRepository.save(broaderOccupation);
 			}
-			logger.info("add occupation relation:{} / {}", occUri, broaderOccUri);
+			logger.info("importOccupationRelations:{}/{}", occUri, broaderOccUri);
 		}
 		csvParser.close();
 		reader.close();	
@@ -243,7 +267,7 @@ public class CsvManager {
 					}					
 				}
 				occupationRepository.save(occupation);
-				logger.info("update occupation:{}", occupationUri);
+				logger.info("importOccupationSkillRelations:{}", occupationUri);
 			}
 		}
 		csvParser.close();
