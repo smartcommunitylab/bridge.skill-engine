@@ -13,6 +13,7 @@ public class JobOffer {
 	private String istatCode;
 	private String iscoCode;
 	private List<String> occupations = new ArrayList<>();
+	private List<ResourceLink> occupationsLink = new ArrayList<>();
 	
 	public String getId() {
 		return id;
@@ -49,6 +50,12 @@ public class JobOffer {
 	}
 	public void setOccupations(List<String> occupations) {
 		this.occupations = occupations;
+	}
+	public List<ResourceLink> getOccupationsLink() {
+		return occupationsLink;
+	}
+	public void setOccupationsLink(List<ResourceLink> occupationsLink) {
+		this.occupationsLink = occupationsLink;
 	}
 
 }

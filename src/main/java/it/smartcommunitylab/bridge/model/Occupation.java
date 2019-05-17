@@ -21,6 +21,10 @@ public class Occupation {
 	private List<String> totalSkill = new ArrayList<String>();
 	private List<String> narrowerOccupation = new ArrayList<String>();
 	private List<String> broaderOccupation = new ArrayList<String>();
+	private List<ResourceLink> hasEssentialSkillLink = new ArrayList<>();
+	private List<ResourceLink> hasOptionalSkillLink = new ArrayList<>();
+	private List<ResourceLink> narrowerOccupationLink = new ArrayList<>();
+	private List<ResourceLink> broaderOccupationLink = new ArrayList<>();
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -118,5 +122,37 @@ public class Occupation {
 
 	public void setDescription(Map<String, String> description) {
 		this.description = description;
+	}
+
+	public List<ResourceLink> getHasEssentialSkillLink() {
+		return hasEssentialSkillLink;
+	}
+
+	public void setHasEssentialSkillLink(List<ResourceLink> hasEssentialSkillLink) {
+		this.hasEssentialSkillLink = hasEssentialSkillLink;
+	}
+
+	public List<ResourceLink> getHasOptionalSkillLink() {
+		return hasOptionalSkillLink;
+	}
+
+	public void setHasOptionalSkillLink(List<ResourceLink> hasOptionalSkillLink) {
+		this.hasOptionalSkillLink = hasOptionalSkillLink;
+	}
+
+	public List<ResourceLink> getNarrowerOccupationLink() {
+		return narrowerOccupationLink;
+	}
+
+	public void setNarrowerOccupationLink(List<ResourceLink> narrowerOccupationLink) {
+		this.narrowerOccupationLink = narrowerOccupationLink;
+	}
+
+	public List<ResourceLink> getBroaderOccupationLink() {
+		return broaderOccupationLink;
+	}
+
+	public void setBroaderOccupationLink(List<ResourceLink> broaderOccupationLink) {
+		this.broaderOccupationLink = broaderOccupationLink;
 	}
 }

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.model.Occupation;
+import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.Skill;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
 import it.smartcommunitylab.bridge.repository.SkillRepository;
@@ -115,10 +116,18 @@ public class CsvManager {
 			Skill broaderSkill = optionalBroaderSkill.get();
 			if(!skill.getBroaderSkill().contains(broaderSkillUri)) {
 				skill.getBroaderSkill().add(broaderSkillUri);
+				ResourceLink rLink = new ResourceLink();
+				rLink.setPreferredLabel(broaderSkill.getPreferredLabel());
+				rLink.setUri(broaderSkill.getUri());
+				skill.getBroaderSkillLink().add(rLink);
 				skillRepository.save(skill);
 			}
 			if(!broaderSkill.getNarrowerSkill().contains(skillUri)) {
 				broaderSkill.getNarrowerSkill().add(skillUri);
+				ResourceLink rLink = new ResourceLink();
+				rLink.setPreferredLabel(skill.getPreferredLabel());
+				rLink.setUri(skill.getUri());
+				broaderSkill.getNarrowerSkillLink().add(rLink);
 				skillRepository.save(broaderSkill);
 			}
 			logger.info("importSkillRelations:{}/{}", skillUri, broaderSkillUri);
@@ -211,10 +220,18 @@ public class CsvManager {
 			Occupation broaderOccupation = optionalBroaderOcc.get();
 			if(!occupation.getBroaderOccupation().contains(broaderOccUri)) {
 				occupation.getBroaderOccupation().add(broaderOccUri);
+				ResourceLink rLink = new ResourceLink();
+				rLink.setPreferredLabel(broaderOccupation.getPreferredLabel());
+				rLink.setUri(broaderOccupation.getUri());
+				occupation.getBroaderOccupationLink().add(rLink);
 				occupationRepository.save(occupation);
 			}
 			if(!broaderOccupation.getNarrowerOccupation().contains(occUri)) {
 				broaderOccupation.getNarrowerOccupation().add(occUri);
+				ResourceLink rLink = new ResourceLink();
+				rLink.setPreferredLabel(occupation.getPreferredLabel());
+				rLink.setUri(occupation.getUri());
+				broaderOccupation.getNarrowerOccupationLink().add(rLink);
 				occupationRepository.save(broaderOccupation);
 			}
 			logger.info("importOccupationRelations:{}/{}", occUri, broaderOccUri);
@@ -237,34 +254,46 @@ public class CsvManager {
 				Occupation occupation = optional.get();
 				String skillUri = record.get("skillUri");
 				String relationType = record.get("relationType");
-				if("essential".equals(relationType)) {
-					if(!occupation.getHasEssentialSkill().contains(skillUri)) {
-						occupation.getHasEssentialSkill().add(skillUri);
-						occupation.getTotalSkill().add(skillUri);
-						occupationRepository.save(occupation);
-					}
-					Optional<Skill> optionalSkill = skillRepository.findById(skillUri);
-					if(optionalSkill.isPresent()) {
-						Skill skill = optionalSkill.get();
+				Optional<Skill> optionalSkill = skillRepository.findById(skillUri);
+				if(optionalSkill.isPresent()) {
+					Skill skill = optionalSkill.get();
+					if("essential".equals(relationType)) {
+						if(!occupation.getHasEssentialSkill().contains(skillUri)) {
+							occupation.getHasEssentialSkill().add(skillUri);
+							occupation.getTotalSkill().add(skillUri);
+							ResourceLink rLink = new ResourceLink();
+							rLink.setPreferredLabel(skill.getPreferredLabel());
+							rLink.setUri(skill.getUri());
+							occupation.getHasEssentialSkillLink().add(rLink);
+							occupationRepository.save(occupation);
+						}
 						if(!skill.getIsEssentialForOccupation().contains(occupationUri)) {
 							skill.getIsEssentialForOccupation().add(occupationUri);
+							ResourceLink rLink = new ResourceLink();
+							rLink.setPreferredLabel(occupation.getPreferredLabel());
+							rLink.setUri(occupation.getUri());				
+							skill.getIsEssentialForOccupationLink().add(rLink);
 							skillRepository.save(skill);
-						}
-					}
-				} else {
-					if(!occupation.getHasOptionalSkill().contains(skillUri)) {
-						occupation.getHasOptionalSkill().add(skillUri);
-						occupation.getTotalSkill().add(skillUri);
-						occupationRepository.save(occupation);
-					}
-					Optional<Skill> optionalSkill = skillRepository.findById(skillUri);
-					if(optionalSkill.isPresent()) {
-						Skill skill = optionalSkill.get();
+						}						
+					} else {
+						if(!occupation.getHasOptionalSkill().contains(skillUri)) {
+							occupation.getHasOptionalSkill().add(skillUri);
+							occupation.getTotalSkill().add(skillUri);
+							ResourceLink rLink = new ResourceLink();
+							rLink.setPreferredLabel(skill.getPreferredLabel());
+							rLink.setUri(skill.getUri());
+							occupation.getHasOptionalSkillLink().add(rLink);
+							occupationRepository.save(occupation);
+						}						
 						if(!skill.getIsOptionalForOccupation().contains(occupationUri)) {
 							skill.getIsOptionalForOccupation().add(occupationUri);
+							ResourceLink rLink = new ResourceLink();
+							rLink.setPreferredLabel(occupation.getPreferredLabel());
+							rLink.setUri(occupation.getUri());
+							skill.getIsOptionalForOccupationLink().add(rLink);
 							skillRepository.save(skill);
 						}
-					}					
+					}
 				}
 				occupationRepository.save(occupation);
 				logger.info("importOccupationSkillRelations:{}", occupationUri);
@@ -273,7 +302,6 @@ public class CsvManager {
 		csvParser.close();
 		reader.close();	
 	}
-	
 	
 	public void indexSkills(String csvFilePath) throws IOException {
 		List<Document> docs = new ArrayList<Document>();

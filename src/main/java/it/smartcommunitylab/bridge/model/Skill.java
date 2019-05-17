@@ -14,10 +14,14 @@ public class Skill {
 	private Map<String, String> preferredLabel = new HashMap<>();
 	private Map<String, String> altLabels = new HashMap<>();
 	private Map<String, String> description = new HashMap<>();
-	private List<String> broaderSkill = new ArrayList<String>();
-	private List<String> narrowerSkill = new ArrayList<String>();
-	private List<String> isEssentialForOccupation = new ArrayList<String>();
-	private List<String> isOptionalForOccupation = new ArrayList<String>();
+	private List<String> broaderSkill = new ArrayList<>();
+	private List<String> narrowerSkill = new ArrayList<>();
+	private List<String> isEssentialForOccupation = new ArrayList<>();
+	private List<String> isOptionalForOccupation = new ArrayList<>();
+	private List<ResourceLink> broaderSkillLink = new ArrayList<>();
+	private List<ResourceLink> narrowerSkillLink = new ArrayList<>();
+	private List<ResourceLink> isEssentialForOccupationLink = new ArrayList<>();
+	private List<ResourceLink> isOptionalForOccupationLink = new ArrayList<>();
 
 	@Override
 	public boolean equals(Object obj) {
@@ -95,5 +99,37 @@ public class Skill {
 
 	public void setDescription(Map<String, String> description) {
 		this.description = description;
+	}
+
+	public List<ResourceLink> getBroaderSkillLink() {
+		return broaderSkillLink;
+	}
+
+	public void setBroaderSkillLink(List<ResourceLink> broaderSkillLink) {
+		this.broaderSkillLink = broaderSkillLink;
+	}
+
+	public List<ResourceLink> getNarrowerSkillLink() {
+		return narrowerSkillLink;
+	}
+
+	public void setNarrowerSkillLink(List<ResourceLink> narrowerSkillLink) {
+		this.narrowerSkillLink = narrowerSkillLink;
+	}
+
+	public List<ResourceLink> getIsEssentialForOccupationLink() {
+		return isEssentialForOccupationLink;
+	}
+
+	public void setIsEssentialForOccupationLink(List<ResourceLink> isEssentialForOccupationLink) {
+		this.isEssentialForOccupationLink = isEssentialForOccupationLink;
+	}
+
+	public List<ResourceLink> getIsOptionalForOccupationLink() {
+		return isOptionalForOccupationLink;
+	}
+
+	public void setIsOptionalForOccupationLink(List<ResourceLink> isOptionalForOccupationLink) {
+		this.isOptionalForOccupationLink = isOptionalForOccupationLink;
 	}
 }

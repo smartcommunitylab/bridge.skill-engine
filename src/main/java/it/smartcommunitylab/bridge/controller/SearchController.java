@@ -16,19 +16,13 @@ import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.matching.OccupationMatching;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.TextDoc;
-import it.smartcommunitylab.bridge.repository.OccupationRepository;
-import it.smartcommunitylab.bridge.repository.SkillRepository;
 
 @RestController
-public class SearchController {
+public class SearchController extends MainController {
 	private static final transient Logger logger = LoggerFactory.getLogger(SearchController.class);
 	
 	@Autowired
 	LuceneManager luceneManager;
-	@Autowired
-	OccupationRepository occupationRepository;
-	@Autowired
-	SkillRepository skillRepository;
 	@Autowired
 	OccupationMatching occupationMatching;
 

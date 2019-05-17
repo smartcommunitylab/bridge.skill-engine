@@ -11,6 +11,7 @@ public class Course {
 	private String extUri;
 	private String desc;
 	private List<String> skills = new ArrayList<>();
+	private List<ResourceLink> skillsLink = new ArrayList<>();
 	
 	public String getId() {
 		return id;
@@ -35,6 +36,12 @@ public class Course {
 	}
 	public void setSkills(List<String> skills) {
 		this.skills = skills;
+	}
+	public List<ResourceLink> getSkillsLink() {
+		return skillsLink;
+	}
+	public void setSkillsLink(List<ResourceLink> skillsLink) {
+		this.skillsLink = skillsLink;
 	}
 
 }

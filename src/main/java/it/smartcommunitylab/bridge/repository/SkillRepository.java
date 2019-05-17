@@ -10,7 +10,11 @@ import it.smartcommunitylab.bridge.model.Skill;
 
 @Repository
 public interface SkillRepository extends MongoRepository<Skill, String> {
+	
 	@Query(value="{$or:[{isEssentialForOccupation:{$in:?0}},{isOptionalForOccupation:{$in:?0}}]}")
 	List<Skill> findByOccupation(String occupationUri);
+	
+	@Query(value="{uri:{$in:?0}}")
+	List<Skill> findByIds(List<String> ids);
 
 }
