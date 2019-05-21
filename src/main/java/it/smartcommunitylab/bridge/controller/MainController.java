@@ -24,6 +24,7 @@ import it.smartcommunitylab.bridge.model.Skill;
 import it.smartcommunitylab.bridge.repository.CourseRepository;
 import it.smartcommunitylab.bridge.repository.JobOfferRepository;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
+import it.smartcommunitylab.bridge.repository.ProfileRepository;
 import it.smartcommunitylab.bridge.repository.SkillRepository;
 
 @Controller
@@ -38,6 +39,8 @@ public class MainController {
 	JobOfferRepository jobOfferRepository;
 	@Autowired
 	CourseRepository courseRepository;
+	@Autowired
+	ProfileRepository profileRepository;
 	
 	public void completeSkill(Skill skill) {
 		List<Skill> broaderSkill = skillRepository.findByIds(skill.getBroaderSkill());

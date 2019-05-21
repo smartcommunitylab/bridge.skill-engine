@@ -12,6 +12,7 @@ import it.smartcommunitylab.bridge.exception.EntityNotFoundException;
 import it.smartcommunitylab.bridge.model.Course;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
+import it.smartcommunitylab.bridge.model.Profile;
 import it.smartcommunitylab.bridge.model.Skill;
 
 @RestController
@@ -56,6 +57,16 @@ public class ResourceController extends MainController {
 		}
 		logger.debug("getCourse:{}", id);
 		return optional.get();				
+	}
+
+	@GetMapping(value = "/api/profile")
+	public Profile getProfile(@RequestParam String extId) throws Exception {
+		Profile profile = profileRepository.findByExtId(extId);
+		if(profile == null) {
+			throw new EntityNotFoundException("resource not found");
+		}
+		logger.debug("getProfile:{}", extId);
+		return profile;				
 	}
 
 }
