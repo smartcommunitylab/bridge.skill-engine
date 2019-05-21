@@ -20,9 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
+import it.smartcommunitylab.bridge.model.IscoIstat;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.Skill;
+import it.smartcommunitylab.bridge.repository.IscoIstatRepository;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
 import it.smartcommunitylab.bridge.repository.SkillRepository;
 
@@ -36,6 +38,8 @@ public class CsvManager {
 	private SkillRepository skillRepository;
 	@Autowired
 	private OccupationRepository occupationRepository;
+	@Autowired
+	private IscoIstatRepository iscoIstatRepository;
 	
 	public void importSkills(String csvFilePath, String lang) throws IOException {
 		Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));
@@ -406,6 +410,33 @@ public class CsvManager {
 		csvParser.close();
 		reader.close();
 		logger.info("indexOccupationIscoGroups:{}", docs.size());
+	}
+	
+	public void importIscoIstatMap(String csvFilePath) throws IOException {
+		Reader reader = Files.newBufferedReader(Paths.get(csvFilePath));
+		CSVFormat csvFormat = CSVFormat.DEFAULT.withDelimiter(';')
+				.withHeader("codiceISCO08","nomeISCO08","codiceCP2011","nomeCP2011")
+				.withSkipHeaderRecord();
+		CSVParser csvParser = new CSVParser(reader, csvFormat);
+		for (CSVRecord record : csvParser) {
+			String istatCode = record.get("codiceCP2011");
+			String istatName = record.get("nomeCP2011").toLowerCase();
+			String iscoCode = record.get("codiceISCO08");
+			String iscoName = record.get("nomeISCO08").toLowerCase();
+			IscoIstat iscoIstat = iscoIstatRepository.findByCompleteIstatCode(istatCode);
+			if(iscoIstat != null) {
+				continue;
+			}
+			iscoIstat = new IscoIstat();
+			iscoIstat.setIscoCode(iscoCode);
+			iscoIstat.setIscoName(iscoName);
+			iscoIstat.setIstatCode(istatCode);
+			iscoIstat.setIstatName(istatName);
+			iscoIstatRepository.save(iscoIstat);
+			logger.info("importIscoIstatMap:{}/{}", iscoCode, istatCode);
+		}
+		csvParser.close();
+		reader.close();
 	}
 
 }
