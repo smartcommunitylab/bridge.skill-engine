@@ -123,6 +123,7 @@ public class CsvManager {
 				ResourceLink rLink = new ResourceLink();
 				rLink.setPreferredLabel(broaderSkill.getPreferredLabel());
 				rLink.setUri(broaderSkill.getUri());
+				rLink.setConceptType(broaderSkill.getConceptType());
 				skill.getBroaderSkillLink().add(rLink);
 				skillRepository.save(skill);
 			}
@@ -131,6 +132,7 @@ public class CsvManager {
 				ResourceLink rLink = new ResourceLink();
 				rLink.setPreferredLabel(skill.getPreferredLabel());
 				rLink.setUri(skill.getUri());
+				rLink.setConceptType(skill.getConceptType());
 				broaderSkill.getNarrowerSkillLink().add(rLink);
 				skillRepository.save(broaderSkill);
 			}
@@ -227,6 +229,7 @@ public class CsvManager {
 				ResourceLink rLink = new ResourceLink();
 				rLink.setPreferredLabel(broaderOccupation.getPreferredLabel());
 				rLink.setUri(broaderOccupation.getUri());
+				rLink.setConceptType(broaderOccupation.getConceptType());
 				occupation.getBroaderOccupationLink().add(rLink);
 				occupationRepository.save(occupation);
 			}
@@ -235,6 +238,7 @@ public class CsvManager {
 				ResourceLink rLink = new ResourceLink();
 				rLink.setPreferredLabel(occupation.getPreferredLabel());
 				rLink.setUri(occupation.getUri());
+				rLink.setConceptType(occupation.getConceptType());
 				broaderOccupation.getNarrowerOccupationLink().add(rLink);
 				occupationRepository.save(broaderOccupation);
 			}
@@ -268,6 +272,7 @@ public class CsvManager {
 							ResourceLink rLink = new ResourceLink();
 							rLink.setPreferredLabel(skill.getPreferredLabel());
 							rLink.setUri(skill.getUri());
+							rLink.setConceptType(skill.getConceptType());
 							occupation.getHasEssentialSkillLink().add(rLink);
 							occupationRepository.save(occupation);
 						}
@@ -276,6 +281,7 @@ public class CsvManager {
 							ResourceLink rLink = new ResourceLink();
 							rLink.setPreferredLabel(occupation.getPreferredLabel());
 							rLink.setUri(occupation.getUri());				
+							rLink.setConceptType(occupation.getConceptType());
 							skill.getIsEssentialForOccupationLink().add(rLink);
 							skillRepository.save(skill);
 						}						
@@ -286,6 +292,7 @@ public class CsvManager {
 							ResourceLink rLink = new ResourceLink();
 							rLink.setPreferredLabel(skill.getPreferredLabel());
 							rLink.setUri(skill.getUri());
+							rLink.setConceptType(skill.getConceptType());
 							occupation.getHasOptionalSkillLink().add(rLink);
 							occupationRepository.save(occupation);
 						}						
@@ -294,6 +301,7 @@ public class CsvManager {
 							ResourceLink rLink = new ResourceLink();
 							rLink.setPreferredLabel(occupation.getPreferredLabel());
 							rLink.setUri(occupation.getUri());
+							rLink.setConceptType(occupation.getConceptType());
 							skill.getIsOptionalForOccupationLink().add(rLink);
 							skillRepository.save(skill);
 						}
