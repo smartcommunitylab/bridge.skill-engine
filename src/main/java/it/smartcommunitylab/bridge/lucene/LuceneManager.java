@@ -128,7 +128,7 @@ public class LuceneManager {
 			textDoc.getFields().put("uri", doc.get("uri"));
 			result.add(textDoc);
 		}
-		logger.debug("searchPreferredLabel:{} / {}", result.size(), text);
+		logger.debug("searchPreferredLabel:{}/{}", result.size(), text);
 		return result;
 	}
 	
@@ -158,7 +158,7 @@ public class LuceneManager {
 			textDoc.getFields().put("uri", doc.get("uri"));
 			result.add(textDoc);
 		}
-		logger.debug("searchByLabelAndType:{} / {}", result.size(), text);
+		logger.debug("searchByLabelAndType:{}/{}/{}", result.size(), concetType, text);
 		return result;
 	}
 	
