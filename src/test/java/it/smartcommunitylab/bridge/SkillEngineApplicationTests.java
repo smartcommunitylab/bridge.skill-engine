@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import it.smartcommunitylab.bridge.csv.CsvManager;
+import it.smartcommunitylab.bridge.extsource.AgenziaLavoroWrapper;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.model.TextDoc;
 
@@ -19,13 +20,31 @@ import it.smartcommunitylab.bridge.model.TextDoc;
 public class SkillEngineApplicationTests {
 	
 	@Autowired
-	CsvManager csvManager;
-	
+	CsvManager csvManager;	
 	@Autowired
 	LuceneManager luceneManager;
+	@Autowired
+	AgenziaLavoroWrapper agenziaLavoroWrapper;
 	
 	@Test
 	public void contextLoads() {
+	}
+	
+	@Test
+	public void getCourses() throws Exception {
+		agenziaLavoroWrapper.getCourses();
+	}
+	
+	@Test
+	public void getJobOffer() throws Exception {
+		//agenziaLavoroWrapper.getJobOffer("https://www.sil.provincia.tn.it/welcomepage/vacancy/view/25300");
+		agenziaLavoroWrapper.getJobOffer("https://www.sil.provincia.tn.it/welcomepage/vacancy/view/25196");
+		agenziaLavoroWrapper.getJobOffer("https://www.sil.provincia.tn.it/welcomepage/vacancy/view/25156");
+	}
+	
+	@Test
+	public void importIscoIstat() throws Exception {
+		csvManager.importIscoIstatMap("C:\\Users\\micnori\\Documents\\Progetti\\Bridge\\raccordo_Isco08_CP2011.csv");
 	}
 	
 	@Test

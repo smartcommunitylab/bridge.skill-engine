@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.smartcommunitylab.bridge.csv.CsvManager;
+import it.smartcommunitylab.bridge.extsource.AgenziaLavoroWrapper;
 
 @RestController
 public class AdminController {
@@ -15,6 +16,8 @@ public class AdminController {
 	
 	@Autowired
 	CsvManager csvManager;
+	@Autowired
+	AgenziaLavoroWrapper agenziaLavoroWrapper;
 	
 	@GetMapping(value = "/admin/import/all")
 	public void importAll(@RequestParam String path) throws Exception {
@@ -41,4 +44,17 @@ public class AdminController {
 		csvManager.importOccupationSkillRelations(path + "/occupationSkillRelations.csv");
 		logger.info("importAll:{}", path);
 	}
+	
+	@GetMapping(value = "/admin/import/iscoistat")
+	public void importIscoIstat(@RequestParam String path) throws Exception {
+		csvManager.importIscoIstatMap(path);
+		logger.info("importIscoIstat:{}", path);
+	}
+	
+	@GetMapping(value = "/admin/import/job")
+	public void importJobOffers() throws Exception {
+		int jobOffers = agenziaLavoroWrapper.getJobOffers();
+		logger.info("importJobOffers:{}", jobOffers);
+	}
+	
 }
