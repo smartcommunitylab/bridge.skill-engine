@@ -57,4 +57,10 @@ public class AdminController {
 		logger.info("importJobOffers:{}", jobOffers);
 	}
 	
+	@GetMapping(value = "/admin/import/course")
+	public void importCourses() throws Exception {
+		int courses = agenziaLavoroWrapper.getCourses();
+		logger.info("importCourses:{}", courses);
+	}
+	
 }

@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -31,11 +32,13 @@ import it.smartcommunitylab.bridge.model.IscoIstat;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.ResourceLink;
+import it.smartcommunitylab.bridge.model.Skill;
 import it.smartcommunitylab.bridge.model.TextDoc;
 import it.smartcommunitylab.bridge.repository.CourseRepository;
 import it.smartcommunitylab.bridge.repository.IscoIstatRepository;
 import it.smartcommunitylab.bridge.repository.JobOfferRepository;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
+import it.smartcommunitylab.bridge.repository.SkillRepository;
 
 @Component
 public class AgenziaLavoroWrapper {
@@ -50,11 +53,14 @@ public class AgenziaLavoroWrapper {
 	@Autowired
 	OccupationRepository occupationRepository;
 	@Autowired
+	SkillRepository skillRepository;
+	@Autowired
 	LuceneManager luceneManager;
 	
-	SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+	SimpleDateFormat sdfJobOffer = new SimpleDateFormat("dd-MM-yyyy");
+	SimpleDateFormat sdfCourse = new SimpleDateFormat("dd/MM/yyyy");
 
-	public void getCourses() throws Exception {
+	public int getCourses() throws Exception {
 		URL url = new URL("https://formazionexte.agenzialavoro.tn.it/facetsearch/datatable_search/corso_adl/titolo/tipologia/125?draw=8&query=*&length=200");
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
 		con.setRequestMethod("GET");
@@ -77,36 +83,38 @@ public class AgenziaLavoroWrapper {
 		con.disconnect();
 		if(status > 299) {
 			logger.info("getCourses error:{}/{}", status, content.toString());
-			return;
+			return 0;
 		}
+		int stored = 0;
 		JsonNode jsonNode = Utils.readJsonFromString(content.toString());
 		if(jsonNode.hasNonNull("data") && jsonNode.get("data").isArray()) {
 			for(JsonNode node : jsonNode.get("data")) {
 				if(node.isArray()) {
 					ArrayNode arrayNode = (ArrayNode)node;
 					if(arrayNode.size() >=  1) {
-						try {
-							String html = arrayNode.get(0).asText();
-							Document document = Jsoup.parse(html);
-							Element element = document.selectFirst("a");
-							if(element != null) {
-								String href = element.attr("href");
+						String html = arrayNode.get(0).asText();
+						Document document = Jsoup.parse(html);
+						Element element = document.selectFirst("a");
+						if(element != null) {
+							String href = element.attr("href");
+							try {
 								Course course = getCourse(href);
 								Course courseDb = courseRepository.findByExtUri(href);
-								if(courseDb == null) {
-									//TODO get skill
-									courseRepository.save(course);
-								} else {
-									//TODO update course info
-								}								
+								if(courseDb != null) {
+									course.setId(courseDb.getId());
+								}
+								courseRepository.save(course);
+								logger.info("getCourses:{}", href);
+								stored++;
+							} catch (Exception e) {
+								logger.info("getCourse error:{}/{}", href, e.getMessage());
 							}
-						} catch (Exception e) {
-							logger.info("getCourse error:{}", e.getMessage());
 						}
 					}
 				}
 			}
 		}
+		return stored;
 	}
 	
 	public Course getCourse(String href) throws Exception {
@@ -128,25 +136,80 @@ public class AgenziaLavoroWrapper {
 		}
 		in.close();
 		con.disconnect();
-		String title;
-		String content;
-		String from;
-		String to;
-		String hours;
-		String duration;
-		String address;
+		String title = null;
+		String content = null;
+		String from = null;
+		String to = null;
+		String hours = null;
+		String duration = null;
+		String address = null;
 		Document document = Jsoup.parse(sb.toString());
-		Element titleElement = document.selectFirst("div.u-content-title h1");
-		title = titleElement.text();
-		Elements elements = document.select("div.Prose");
-		int count = 1;
+		title = document.selectFirst("div.u-content-title h1").text();
+		Elements elements = document.select("div.Prose p");
 		for (Element element : elements) {
-			if(count == 1) {
-				
+			String field = element.selectFirst("b") != null ? element.selectFirst("b").text() : "";
+			String value = element.ownText();
+			switch (field) {
+			case "Durata in ore:":
+				duration = value;
+				break;
+			case "Orario:":
+				hours = value;
+				break;
+			case "Data inizio:":
+				from = value;
+				break;
+			case "Data fine:":
+				to = value;
+				break;
+			default:
+				break;
 			}
-			count++;
 		}
-		return null;
+		Element locationElement = document.selectFirst("div.u-content-related-item");
+		address = locationElement.ownText();
+		Element anchorElement = locationElement.selectFirst("div.u-size1of2 a");
+		String anchor = anchorElement.attr("href");
+		int initLat = anchor.indexOf("//'");
+		int endLat = anchor.indexOf(",", initLat);
+		int initLon = anchor.indexOf(",", initLat);
+		int endLon = anchor.indexOf("'", initLon);
+		double latitude = Double.valueOf(anchor.substring(initLat + 3, endLat));
+		double longitude = Double.valueOf(anchor.substring(initLon + 1, endLon));
+		content = document.selectFirst("div.Prose div.Grid").text();
+		
+		List<String> skills = new ArrayList<>();
+		List<ResourceLink> skillsLink = new ArrayList<>(); 
+		List<TextDoc> skillTextList = luceneManager.searchByLabelAndType(title, Const.CONCEPT_SKILL, 10, "text");
+		for (TextDoc textDoc : skillTextList) {
+			if(textDoc.getScore() < 4.0) {
+				continue;
+			}
+			Optional<Skill> optional = skillRepository.findById(textDoc.getFields().get("uri"));
+			if(optional.isPresent()) {
+				Skill skill = optional.get();
+				skills.add(skill.getUri());
+				ResourceLink link = new ResourceLink();
+				link.setUri(skill.getUri());
+				link.setConceptType(skill.getConceptType());
+				link.setPreferredLabel(skill.getPreferredLabel());
+				skillsLink.add(link);
+			}
+		}
+		
+		Course course = new Course();
+		course.setExtUri(href);
+		course.setTitle(title);
+		course.setDuration(Integer.valueOf(duration));
+		course.setHours(hours);
+		course.setDateFrom(sdfCourse.parse(from));
+		course.setDateTo(sdfCourse.parse(to));
+		course.setAddress(address);
+		course.setGeocoding(new double[] {longitude, latitude});
+		course.setContent(content);
+		course.setSkills(skills);
+		course.setSkillsLink(skillsLink);
+		return course;
 	}
 	
 	public JobOffer getJobOffer(String href) throws Exception {
@@ -264,7 +327,7 @@ public class AgenziaLavoroWrapper {
 		jobOffer.setWorkPlace(workPlace);
 		jobOffer.setProfessionalGroup(professionalGroup);
 		if(!StringUtils.isEmpty(expirationDate)) {
-			Date expDate = sdf.parse(expirationDate);
+			Date expDate = sdfJobOffer.parse(expirationDate);
 			Date now = new Date();
 			if(now.after(expDate)) {
 				logger.info("getJobOffer expired:{}", href);
@@ -295,7 +358,7 @@ public class AgenziaLavoroWrapper {
 					stored++;
 				}
 			} catch (Exception e) {
-				logger.info("getJobOffers error:{}", e.getMessage());
+				logger.info("getJobOffers error:{}/{}", href + count, e.getMessage());
 			}
 		}
 		return stored;
