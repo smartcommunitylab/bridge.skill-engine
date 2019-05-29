@@ -3,6 +3,7 @@ package it.smartcommunitylab.bridge.repository;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,7 +19,7 @@ public class SkillRepositoryCustomImpl implements SkillRepositoryCustom {
 
 	@Override
 	public List<Skill> findSkill(boolean skillGroup, List<String> isEssentialForOccupation,
-			List<String> isOptionalForOccupation) {
+			List<String> isOptionalForOccupation, Pageable pageable) {
 		Criteria criteria = skillGroup ? Criteria.where("conceptType").is(Const.CONCEPT_SKILL_GROUP) :
 			Criteria.where("conceptType").is(Const.CONCEPT_SKILL);
 		if((isEssentialForOccupation != null) && (isEssentialForOccupation.size() > 0)) {
@@ -29,6 +30,9 @@ public class SkillRepositoryCustomImpl implements SkillRepositoryCustom {
 		}
 		Query query = new Query(criteria);
 		query.with(new Sort(Direction.ASC, "preferredLabel.it"));
+		if(pageable != null) {
+			query.with(pageable);
+		}
 		return mongoTemplate.find(query, Skill.class);
 	}
 
