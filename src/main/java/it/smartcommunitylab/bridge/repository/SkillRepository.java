@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import it.smartcommunitylab.bridge.model.Skill;
 
 @Repository
-public interface SkillRepository extends MongoRepository<Skill, String> {
+public interface SkillRepository extends MongoRepository<Skill, String>, SkillRepositoryCustom {
 	
 	@Query(value="{$or:[{isEssentialForOccupation:{$in:?0}},{isOptionalForOccupation:{$in:?0}}]}")
 	List<Skill> findByOccupation(String occupationUri);

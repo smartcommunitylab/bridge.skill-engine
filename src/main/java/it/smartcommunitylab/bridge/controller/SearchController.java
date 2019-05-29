@@ -7,14 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
-import it.smartcommunitylab.bridge.matching.OccupationMatching;
-import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.TextDoc;
 
 @RestController
@@ -23,8 +19,6 @@ public class SearchController extends MainController {
 	
 	@Autowired
 	LuceneManager luceneManager;
-	@Autowired
-	OccupationMatching occupationMatching;
 
 	@GetMapping(value = "/api/search/label")
 	public List<TextDoc> searchByLabel(
@@ -41,19 +35,4 @@ public class SearchController extends MainController {
 		return result;
 	}
 	
-	@PostMapping(value = "/api/match/occupation/skills")
-	public List<Occupation> findOccupationBySkills(
-			@RequestBody List<String> skills) throws Exception {
-		List<Occupation> result = occupationRepository.findByMandatorySkill(skills);
-		logger.debug("findOccupationBySkills:{}", result.size());
-		return result;
-	}
-	
-	@GetMapping(value = "/api/match/occupation/isco")
-	public List<Occupation> findOccupationByIscoCode(
-			@RequestParam String iscoCode) throws Exception {
-		List<Occupation> result = occupationRepository.findByIscoCode("^" + iscoCode);
-		logger.debug("findOccupationByIscoCode:{}", result.size());
-		return result;
-	}
 }

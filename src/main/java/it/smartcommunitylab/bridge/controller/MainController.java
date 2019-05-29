@@ -1,7 +1,9 @@
 package it.smartcommunitylab.bridge.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -41,6 +43,38 @@ public class MainController {
 	CourseRepository courseRepository;
 	@Autowired
 	ProfileRepository profileRepository;
+	
+	public List<ResourceLink> completeSkillLink(List<String> skills) {
+		List<ResourceLink> result = new ArrayList<>();
+		for (String uri : skills) {
+			Optional<Skill> optional = skillRepository.findById(uri);
+			if(optional.isPresent()) {
+				Skill skill = optional.get();
+				ResourceLink rLink = new ResourceLink();
+				rLink.setUri(skill.getUri());
+				rLink.setConceptType(skill.getConceptType());
+				rLink.setPreferredLabel(skill.getPreferredLabel());
+				result.add(rLink);
+			}
+		}
+		return result;
+	}
+	
+	public List<ResourceLink> completeOccupationLink(List<String> occupations) {
+		List<ResourceLink> result = new ArrayList<>();
+		for (String uri : occupations) {
+			Optional<Occupation> optional = occupationRepository.findById(uri);
+			if(optional.isPresent()) {
+				Occupation occupation = optional.get();
+				ResourceLink rLink = new ResourceLink();
+				rLink.setUri(occupation.getUri());
+				rLink.setConceptType(occupation.getConceptType());
+				rLink.setPreferredLabel(occupation.getPreferredLabel());
+				result.add(rLink);
+			}
+		}
+		return result;
+	}
 	
 	public void completeSkill(Skill skill) {
 		List<Skill> broaderSkill = skillRepository.findByIds(skill.getBroaderSkill());

@@ -1,5 +1,6 @@
 package it.smartcommunitylab.bridge.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,10 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.smartcommunitylab.bridge.exception.EntityNotFoundException;
-import it.smartcommunitylab.bridge.model.Course;
-import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
-import it.smartcommunitylab.bridge.model.Profile;
 import it.smartcommunitylab.bridge.model.Skill;
 
 @RestController
@@ -39,34 +37,25 @@ public class ResourceController extends MainController {
 		return optional.get();		
 	}
 	
-	@GetMapping(value = "/api/joboffer")
-	public JobOffer getJobOffer(@RequestParam String id) throws Exception {
-		Optional<JobOffer> optional = jobOfferRepository.findById(id);
-		if(optional.isEmpty()) {
-			throw new EntityNotFoundException("resource not found");
-		}
-		logger.debug("getJobOffer:{}", id);
-		return optional.get();				
+	@GetMapping(value = "/api/skills")
+	public List<Skill> findSkill(
+			@RequestParam(required = false) List<String> isEssentialForOccupation,
+			@RequestParam(required = false) List<String> isOptionalForOccupation,
+			@RequestParam(required = false) boolean skillGroup) throws Exception {
+		List<Skill> list = skillRepository.findSkill(skillGroup, isEssentialForOccupation, isOptionalForOccupation);
+		logger.debug("findSkill:{}", list.size());
+		return list;
 	}
 	
-	@GetMapping(value = "/api/course")
-	public Course getCourse(@RequestParam String id) throws Exception {
-		Optional<Course> optional = courseRepository.findById(id);
-		if(optional.isEmpty()) {
-			throw new EntityNotFoundException("resource not found");
-		}
-		logger.debug("getCourse:{}", id);
-		return optional.get();				
+	@GetMapping(value = "/api/occupations")
+	public List<Occupation> findOccupation(
+			@RequestParam(required = false) List<String> hasEssentialSkill,
+			@RequestParam(required = false) List<String> hasOptionalSkill,
+			@RequestParam(required = false) String iscoCode,
+			@RequestParam(required = false) boolean iscoGroup) throws Exception {
+		List<Occupation> list = occupationRepository.findOccupation(iscoGroup, iscoCode, hasEssentialSkill, hasOptionalSkill);
+		logger.debug("findOccupation:{}", list.size());
+		return list;
 	}
-
-	@GetMapping(value = "/api/profile")
-	public Profile getProfile(@RequestParam String extId) throws Exception {
-		Profile profile = profileRepository.findByExtId(extId);
-		if(profile == null) {
-			throw new EntityNotFoundException("resource not found");
-		}
-		logger.debug("getProfile:{}", extId);
-		return profile;				
-	}
-
+	
 }
