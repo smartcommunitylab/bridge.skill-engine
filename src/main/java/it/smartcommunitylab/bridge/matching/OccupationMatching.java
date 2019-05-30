@@ -30,8 +30,7 @@ public class OccupationMatching {
 			List<String> mandatorySkills) throws Exception {
 		List<Occupation> result = new ArrayList<Occupation>();
 		text = StringUtils.strip(text);
-		List<TextDoc> docs = luceneManager.searchByLabelAndType(text, Const.CONCEPT_SKILL, 10,
-				"preferredLabel", "altLabels");
+		List<TextDoc> docs = luceneManager.searchByFields(text, Const.CONCEPT_SKILL, null, "text", 10);
 		for(TextDoc textDoc : docs) {
 			String uri = textDoc.getFields().get("uri");
 			if(StringUtils.isEmpty(uri)) {

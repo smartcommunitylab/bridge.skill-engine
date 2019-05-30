@@ -180,7 +180,7 @@ public class AgenziaLavoroWrapper {
 		
 		List<String> skills = new ArrayList<>();
 		List<ResourceLink> skillsLink = new ArrayList<>(); 
-		List<TextDoc> skillTextList = luceneManager.searchByLabelAndType(title, Const.CONCEPT_SKILL, 10, "text");
+		List<TextDoc> skillTextList = luceneManager.searchByFields(title, Const.CONCEPT_SKILL, null, "text", 10);
 		for (TextDoc textDoc : skillTextList) {
 			if(textDoc.getScore() < 4.0) {
 				continue;
@@ -299,8 +299,8 @@ public class AgenziaLavoroWrapper {
 		
 		List<String> occupations = new ArrayList<>();
 		List<ResourceLink> occupationsLink = new ArrayList<>();
-		List<TextDoc> iscoGroupTextList = luceneManager.searchByLabelAndType(title, Const.CONCEPT_ISCO_GROUP, 10, "text");
-		List<TextDoc> occupationTextList = luceneManager.searchByLabelAndType(title, Const.CONCEPT_OCCCUPATION, 20, "text");
+		List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(title, Const.CONCEPT_ISCO_GROUP, null, "text", 10);
+		List<TextDoc> occupationTextList = luceneManager.searchByFields(title, Const.CONCEPT_OCCCUPATION, null, "text", 20);
 		List<Occupation> occupationList = occupationRepository.findByIscoCode("^" + iscoCode);
 		for (Occupation occupation : occupationList) {
 			if(containsUri(iscoGroupTextList, occupation.getUri()) || 

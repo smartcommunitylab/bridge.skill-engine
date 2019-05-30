@@ -39,6 +39,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.util.CoreMap;
 import eu.fbk.dh.tint.runner.TintPipeline;
+import it.smartcommunitylab.bridge.common.Utils;
 import it.smartcommunitylab.bridge.model.TextDoc;
 
 @Component
@@ -132,18 +133,30 @@ public class LuceneManager {
 		return result;
 	}
 	
-	public List<TextDoc> searchByLabelAndType(String text, String concetType, 
-			int maxResult, String... field) throws ParseException, IOException {
-		QueryParser parser = new MultiFieldQueryParser(field, analyzer);
+	public List<TextDoc> searchByFields(String text, String concetType, 
+			String iscoGroup, String field, int maxResult) throws ParseException, IOException {
+		BooleanQuery booleanQuery = null;
+		
+		QueryParser parser = new QueryParser(field, analyzer);
 		Query fieldQuery = parser.parse(QueryParser.escape(normalizeText(text)));
 		
 		SimpleQueryParser simpleParser = new SimpleQueryParser(analyzer, "conceptType");
 		Query typeQuery = simpleParser.parse(concetType);
 		
-		BooleanQuery booleanQuery = new BooleanQuery.Builder()
-				.add(fieldQuery, BooleanClause.Occur.MUST)
-				.add(typeQuery, BooleanClause.Occur.MUST)
-				.build();
+		if(Utils.isNotEmpty(iscoGroup)) {
+			QueryParser parserIsco = new QueryParser("iscoGroup", analyzer);
+			Query iscoQuery = parserIsco.parse("/^" + iscoGroup + "/");
+			booleanQuery = new BooleanQuery.Builder()
+					.add(fieldQuery, BooleanClause.Occur.MUST)
+					.add(typeQuery, BooleanClause.Occur.MUST)
+					.add(iscoQuery, BooleanClause.Occur.MUST)
+					.build();
+		} else {
+			booleanQuery = new BooleanQuery.Builder()
+					.add(fieldQuery, BooleanClause.Occur.MUST)
+					.add(typeQuery, BooleanClause.Occur.MUST)
+					.build();
+		}
 		
 		ScoreDoc[] hits = isearcher.search(booleanQuery, maxResult).scoreDocs;
 		List<TextDoc> result = new ArrayList<TextDoc>();
@@ -158,7 +171,7 @@ public class LuceneManager {
 			textDoc.getFields().put("uri", doc.get("uri"));
 			result.add(textDoc);
 		}
-		logger.debug("searchByLabelAndType:{}/{}/{}", result.size(), concetType, text);
+		logger.debug("searchByFields:{}/{}/{}/{}", result.size(), concetType, iscoGroup, text);
 		return result;
 	}
 	
