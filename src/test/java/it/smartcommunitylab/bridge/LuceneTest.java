@@ -4,8 +4,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.lucene.analysis.it.ItalianAnalyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -31,6 +33,15 @@ public class LuceneTest {
 		TermQuery termQuery = new TermQuery(new Term("conceptType", "KnowledgeSkillCompetence"));
 		scoreDocs = isearcher.search(termQuery, 10).scoreDocs;
 		System.out.println("TermQuery:" + scoreDocs.length);
+		
+		QueryParser parserIsco = new QueryParser("iscoGroup", new ItalianAnalyzer());
+		Query iscoQuery = parserIsco.parse("12*");
+		scoreDocs = isearcher.search(iscoQuery, 10).scoreDocs;
+		System.out.println("Regexp QueryParser:" + scoreDocs.length);
+		for(ScoreDoc scoreDoc : scoreDocs) {
+			Document doc = isearcher.doc(scoreDoc.doc);
+			System.out.println(doc.get("uri") + " - " + doc.get("iscoGroup"));
+		}
 		
 		ireader.close();
     directory.close();

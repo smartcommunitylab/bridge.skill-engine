@@ -134,10 +134,10 @@ public class LuceneManager {
 	}
 	
 	public List<TextDoc> searchByFields(String text, String concetType, 
-			String iscoGroup, String field, int maxResult) throws ParseException, IOException {
+			String iscoGroup, int maxResult) throws ParseException, IOException {
 		BooleanQuery booleanQuery = null;
 		
-		QueryParser parser = new QueryParser(field, analyzer);
+		QueryParser parser = new QueryParser("text", analyzer);
 		Query fieldQuery = parser.parse(QueryParser.escape(normalizeText(text)));
 		
 		SimpleQueryParser simpleParser = new SimpleQueryParser(analyzer, "conceptType");
@@ -145,7 +145,7 @@ public class LuceneManager {
 		
 		if(Utils.isNotEmpty(iscoGroup)) {
 			QueryParser parserIsco = new QueryParser("iscoGroup", analyzer);
-			Query iscoQuery = parserIsco.parse("/^" + iscoGroup + "/");
+			Query iscoQuery = parserIsco.parse(iscoGroup + "*");
 			booleanQuery = new BooleanQuery.Builder()
 					.add(fieldQuery, BooleanClause.Occur.MUST)
 					.add(typeQuery, BooleanClause.Occur.MUST)

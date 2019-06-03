@@ -180,7 +180,7 @@ public class AgenziaLavoroWrapper {
 		
 		List<String> skills = new ArrayList<>();
 		List<ResourceLink> skillsLink = new ArrayList<>(); 
-		List<TextDoc> skillTextList = luceneManager.searchByFields(title, Const.CONCEPT_SKILL, null, "text", 10);
+		List<TextDoc> skillTextList = luceneManager.searchByFields(title, Const.CONCEPT_SKILL, null, 10);
 		for (TextDoc textDoc : skillTextList) {
 			if(textDoc.getScore() < 4.0) {
 				continue;
@@ -299,8 +299,8 @@ public class AgenziaLavoroWrapper {
 		
 		List<String> occupations = new ArrayList<>();
 		List<ResourceLink> occupationsLink = new ArrayList<>();
-		List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(title, Const.CONCEPT_ISCO_GROUP, null, "text", 10);
-		List<TextDoc> occupationTextList = luceneManager.searchByFields(title, Const.CONCEPT_OCCCUPATION, null, "text", 20);
+		List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(title, Const.CONCEPT_ISCO_GROUP, null, 10);
+		List<TextDoc> occupationTextList = luceneManager.searchByFields(title, Const.CONCEPT_OCCCUPATION, null, 20);
 		List<Occupation> occupationList = occupationRepository.findByIscoCode("^" + iscoCode);
 		for (Occupation occupation : occupationList) {
 			if(containsUri(iscoGroupTextList, occupation.getUri()) || 
@@ -344,7 +344,7 @@ public class AgenziaLavoroWrapper {
 	public int getJobOffers() {
 		String href = "https://www.sil.provincia.tn.it/welcomepage/vacancy/view/";
 		int stored = 0;
-		int endCount = 25350;
+		int endCount = 26000;
 		for(int count = 25000; count < endCount; count++) {
 			try {
 				JobOffer jobOffer = getJobOffer(href + count);

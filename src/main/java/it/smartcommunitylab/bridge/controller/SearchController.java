@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import it.smartcommunitylab.bridge.common.Const;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
+import it.smartcommunitylab.bridge.model.Course;
+import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.Skill;
 import it.smartcommunitylab.bridge.model.TextDoc;
@@ -34,7 +36,7 @@ public class SearchController extends MainController {
 		if(StringUtils.isEmpty(conceptType)) {
 			result = luceneManager.searchByLabel(text, 20, "text");
 		} else {
-			result = luceneManager.searchByFields(text, conceptType, null, "text", 20);
+			result = luceneManager.searchByFields(text, conceptType, null, 20);
 		}
 		logger.debug("searchByLabel:{}/{}", result.size(), text);
 		return result;
@@ -49,9 +51,9 @@ public class SearchController extends MainController {
 		List<TextDoc> docs = null;
 		text = StringUtils.strip(text);
 		if(skillGroup) {
-			docs = luceneManager.searchByFields(text, Const.CONCEPT_SKILL_GROUP, null, "text", size);
+			docs = luceneManager.searchByFields(text, Const.CONCEPT_SKILL_GROUP, null, size);
 		} else {
-			docs = luceneManager.searchByFields(text, Const.CONCEPT_SKILL, null, "text", size);
+			docs = luceneManager.searchByFields(text, Const.CONCEPT_SKILL, null, size);
 		}
 		for (TextDoc textDoc : docs) {
 			String uri = textDoc.getFields().get("uri");
@@ -75,9 +77,9 @@ public class SearchController extends MainController {
 		List<TextDoc> docs = null;
 		text = StringUtils.strip(text);
 		if(iscoGroup) {
-			docs = luceneManager.searchByFields(text, Const.CONCEPT_ISCO_GROUP, iscoCode, "text", size);
+			docs = luceneManager.searchByFields(text, Const.CONCEPT_ISCO_GROUP, iscoCode, size);
 		} else {
-			docs = luceneManager.searchByFields(text, Const.CONCEPT_OCCCUPATION, iscoCode, "text", size);
+			docs = luceneManager.searchByFields(text, Const.CONCEPT_OCCCUPATION, iscoCode, size);
 		}
 		for (TextDoc textDoc : docs) {
 			String uri = textDoc.getFields().get("uri");
@@ -88,6 +90,28 @@ public class SearchController extends MainController {
 			}
 		}
 		logger.debug("searchOccupation:{}/{}", result.size(), text);
+		return result;
+	}
+	
+	@GetMapping(value = "/api/search/course")
+	public List<Course> searchCourse(
+			@RequestParam double latitude,
+			@RequestParam double longitude,
+			@RequestParam double distance,
+			@RequestParam(required = false) List<String> skills) throws Exception {
+		List<Course> result = courseRepository.findByLocation(latitude, longitude, distance, skills);
+		logger.debug("searchCourse:{}/{}/{}/{}", result.size(), latitude + "," + longitude, distance, skills);
+		return result;
+	}
+	
+	@GetMapping(value = "/api/search/joboffer")
+	public List<JobOffer> searchJobOffer(
+			@RequestParam double latitude,
+			@RequestParam double longitude,
+			@RequestParam double distance,
+			@RequestParam(required = false) String iscoCode) throws Exception {
+		List<JobOffer> result = jobOfferRepository.findByLocation(latitude, longitude, distance, iscoCode);
+		logger.debug("searchJobOffer:{}/{}/{}/{}", result.size(), latitude + "," + longitude, distance, iscoCode);
 		return result;
 	}
 	

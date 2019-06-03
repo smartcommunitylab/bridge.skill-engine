@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import it.smartcommunitylab.bridge.model.Course;
 
 @Repository
-public interface CourseRepository extends MongoRepository<Course, String> {
+public interface CourseRepository extends MongoRepository<Course, String>, CourseRepositoryCustom {
 	@Query(value="{extUri:?0}")
 	Course findByExtUri(String extUri);
 

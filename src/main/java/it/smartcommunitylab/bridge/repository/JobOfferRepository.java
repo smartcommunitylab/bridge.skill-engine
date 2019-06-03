@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import it.smartcommunitylab.bridge.model.JobOffer;
 
 @Repository
-public interface JobOfferRepository extends MongoRepository<JobOffer, String> {
+public interface JobOfferRepository extends MongoRepository<JobOffer, String>, JobOfferRepositoryCustom {
 	@Query(value="{extUri:?0}")
 	JobOffer findByExtUri(String extUri);
 
