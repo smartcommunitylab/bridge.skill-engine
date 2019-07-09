@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import it.smartcommunitylab.bridge.common.Const;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
+import it.smartcommunitylab.bridge.matching.ResourceMatching;
 import it.smartcommunitylab.bridge.model.Course;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
@@ -26,6 +27,8 @@ public class SearchController extends MainController {
 	
 	@Autowired
 	LuceneManager luceneManager;
+	@Autowired
+	ResourceMatching resourceMatching;
 
 	@GetMapping(value = "/api/search/label")
 	public List<TextDoc> searchByLabel(
@@ -115,4 +118,14 @@ public class SearchController extends MainController {
 		return result;
 	}
 	
+	@GetMapping(value = "/api/search/jobofferbyprofile")
+	public List<JobOffer> searchJobOfferByProfileAndOccupation(
+			@RequestParam double latitude,
+			@RequestParam double longitude,
+			@RequestParam double distance,
+			@RequestParam String occupationUri,
+			@RequestParam String extId) throws Exception {
+		List<JobOffer> result = new ArrayList<>();
+		return result;
+	}
 }

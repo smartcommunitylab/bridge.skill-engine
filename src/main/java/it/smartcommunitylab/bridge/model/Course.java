@@ -20,6 +20,7 @@ public class Course {
 	private double[] geocoding; // lon,lat
 	private List<String> skills = new ArrayList<>();
 	private List<ResourceLink> skillsLink = new ArrayList<>();
+	private List<String> cogitoAnalysis = new ArrayList<>();
 	
 	public String getId() {
 		return id;
@@ -92,6 +93,12 @@ public class Course {
 	}
 	public void setGeocoding(double[] geocoding) {
 		this.geocoding = geocoding;
+	}
+	public List<String> getCogitoAnalysis() {
+		return cogitoAnalysis;
+	}
+	public void setCogitoAnalysis(List<String> cogitoAnalysis) {
+		this.cogitoAnalysis = cogitoAnalysis;
 	}
 
 }

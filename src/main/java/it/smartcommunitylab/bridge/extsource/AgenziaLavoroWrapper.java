@@ -56,6 +56,8 @@ public class AgenziaLavoroWrapper {
 	SkillRepository skillRepository;
 	@Autowired
 	LuceneManager luceneManager;
+	@Autowired
+	CogitoAnalyzer cogitoAnalyzer;
 	
 	SimpleDateFormat sdfJobOffer = new SimpleDateFormat("dd-MM-yyyy");
 	SimpleDateFormat sdfCourse = new SimpleDateFormat("dd/MM/yyyy");
@@ -137,7 +139,7 @@ public class AgenziaLavoroWrapper {
 		in.close();
 		con.disconnect();
 		String title = null;
-		String content = null;
+		StringBuffer content = new StringBuffer();
 		String from = null;
 		String to = null;
 		String hours = null;
@@ -176,7 +178,29 @@ public class AgenziaLavoroWrapper {
 		int endLon = anchor.indexOf("'", initLon);
 		double latitude = Double.valueOf(anchor.substring(initLat + 3, endLat));
 		double longitude = Double.valueOf(anchor.substring(initLon + 1, endLon));
-		content = document.selectFirst("div.Prose div.Grid").text();
+		
+		content.append(title + "\n");
+		elements = document.select("div.Prose div.Grid div");
+		boolean nextContent = false;
+		for (Element element : elements) {
+			if(nextContent) {
+				nextContent = false;
+				Elements paragraphs = element.select("p");
+				for(Element paragraph : paragraphs) {
+					content.append(paragraph.text() + "\n");
+				}
+				continue;
+			}
+			String field = element.selectFirst("b") != null ? element.selectFirst("b").text() : "";
+			switch (field) {
+				case "Descrizione della modalità di formazione":
+					nextContent = true;
+					break;
+				case "Sintesi dei contenuti":
+					nextContent = true;
+					break;
+			}
+		}
 		
 		List<String> skills = new ArrayList<>();
 		List<ResourceLink> skillsLink = new ArrayList<>(); 
@@ -206,9 +230,11 @@ public class AgenziaLavoroWrapper {
 		course.setDateTo(sdfCourse.parse(to));
 		course.setAddress(address);
 		course.setGeocoding(new double[] {longitude, latitude});
-		course.setContent(content);
+		course.setContent(content.toString());
 		course.setSkills(skills);
 		course.setSkillsLink(skillsLink);
+		
+		cogitoAnalyzer.analyzeCourse(course);
 		return course;
 	}
 	
