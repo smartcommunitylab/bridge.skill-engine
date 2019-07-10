@@ -26,6 +26,7 @@ public class JobOffer {
 	private List<String> occupations = new ArrayList<>();
 	private List<ResourceLink> occupationsLink = new ArrayList<>();
 	
+	
 	public String getId() {
 		return id;
 	}

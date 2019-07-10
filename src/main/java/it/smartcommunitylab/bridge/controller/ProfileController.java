@@ -38,7 +38,7 @@ public class ProfileController extends MainController {
 			profile.setId(profileDb.getId());
 		}
 		profile.setOccupationsLink(completeOccupationLink(profile.getOccupations()));
-		profile.setSkillsLink(completeSkillLink(profile.getOccupations()));
+		profile.setSkillsLink(completeSkillLink(profile.getSkills()));
 		profileRepository.save(profile);
 		logger.info("saveProfile:{}", profile.getExtId());
 		return profile;

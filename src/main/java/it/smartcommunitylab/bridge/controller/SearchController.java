@@ -125,7 +125,10 @@ public class SearchController extends MainController {
 			@RequestParam double distance,
 			@RequestParam String occupationUri,
 			@RequestParam String extId) throws Exception {
-		List<JobOffer> result = new ArrayList<>();
+		List<JobOffer> result = resourceMatching.findJobOfferByProfile(extId, occupationUri, 
+				latitude, longitude, distance);
+		logger.debug("searchJobOfferByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), latitude + "," + longitude, 
+				distance, occupationUri, extId);
 		return result;
 	}
 }

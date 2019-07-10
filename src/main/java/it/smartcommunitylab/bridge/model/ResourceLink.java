@@ -3,10 +3,15 @@ package it.smartcommunitylab.bridge.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.annotation.Transient;
+
 public class ResourceLink {
 		private Map<String, String> preferredLabel = new HashMap<>();
 		private String uri;
 		private String conceptType;
+		
+		@Transient
+		private int matching;
 		
 		public Map<String, String> getPreferredLabel() {
 			return preferredLabel;
@@ -25,6 +30,12 @@ public class ResourceLink {
 		}
 		public void setConceptType(String conceptType) {
 			this.conceptType = conceptType;
+		}
+		public int getMatching() {
+			return matching;
+		}
+		public void setMatching(int matching) {
+			this.matching = matching;
 		}
 		
 }

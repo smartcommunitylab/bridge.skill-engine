@@ -16,6 +16,7 @@ import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.Profile;
+import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.TextDoc;
 import it.smartcommunitylab.bridge.repository.JobOfferRepository;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
@@ -65,16 +66,40 @@ public class ResourceMatching {
 		}
 		Optional<Occupation> optional = occupationRepository.findById(occupationUri);
 		if(optional.isEmpty()) {
-			throw new EntityNotFoundException("profile not found");
+			throw new EntityNotFoundException("occupation not found");
 		}
 		Occupation occupation = optional.get();
 		String iscoCode = occupation.getIscoCode();
-		if(iscoCode.length() > 3) {
-			iscoCode = iscoCode.substring(0, 3);
-		}
+		iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
 		List<JobOffer> offers = jobOfferRepository.findByLocation(latitude, longitude, distance, iscoCode);
-		
-		return null;
+		for(JobOffer jobOffer : offers) {
+			for(ResourceLink resourceLink : jobOffer.getOccupationsLink()) {
+				if(resourceLink.getConceptType().equals(Const.CONCEPT_ISCO_GROUP)) {
+					continue;
+				}
+				Optional<Occupation> optionalOcc = occupationRepository.findById(resourceLink.getUri());
+				if(optionalOcc.isPresent()) {
+					Occupation occ = optionalOcc.get();
+					resourceLink.setMatching(checkSkillMatching(occ.getHasEssentialSkill(), profile));
+				}
+			}
+		}		
+		return offers;
+	}
+	
+	private int checkSkillMatching(List<String> skills, Profile profile) {
+		int tot = skills.size();
+		int count = 0;
+		if(tot == 0) {
+			return 0;
+		}
+		for(String skill : skills) {
+			if(profile.getSkills().contains(skill)) {
+				count++;
+			}
+		}
+		int percent = count * 100 / tot;
+		return percent;
 	}
 
 }
