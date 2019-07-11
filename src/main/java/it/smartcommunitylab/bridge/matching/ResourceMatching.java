@@ -13,11 +13,13 @@ import com.google.common.collect.Lists;
 import it.smartcommunitylab.bridge.common.Const;
 import it.smartcommunitylab.bridge.exception.EntityNotFoundException;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
+import it.smartcommunitylab.bridge.model.Course;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.Profile;
 import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.TextDoc;
+import it.smartcommunitylab.bridge.repository.CourseRepository;
 import it.smartcommunitylab.bridge.repository.JobOfferRepository;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
 import it.smartcommunitylab.bridge.repository.ProfileRepository;
@@ -36,6 +38,8 @@ public class ResourceMatching {
 	ProfileRepository profileRepository;
 	@Autowired
 	JobOfferRepository jobOfferRepository;
+	@Autowired
+	CourseRepository courseRepository;
 	
 	public List<Occupation> findOccupationBySkills(String text, 
 			List<String> mandatorySkills) throws Exception {
@@ -85,6 +89,35 @@ public class ResourceMatching {
 			}
 		}		
 		return offers;
+	}
+	
+	public List<Course> findCourseByProfile(String profileExtId, String occupationUri,
+			double latitude, double longitude, double distance) throws Exception {
+		Profile profile = profileRepository.findByExtId(profileExtId);
+		if(profile == null) {
+			throw new EntityNotFoundException("profile not found");
+		}
+		Optional<Occupation> optional = occupationRepository.findById(occupationUri);
+		if(optional.isEmpty()) {
+			throw new EntityNotFoundException("occupation not found");
+		}
+		Occupation occupation = optional.get();
+		List<String> skills = new ArrayList<String>();
+		skills.addAll(occupation.getHasEssentialSkill());
+		for(String skill : skills) {
+			if(profile.getSkills().contains(skill)) {
+				skills.remove(skill);
+			}
+		}
+		List<Course> courses = courseRepository.findByLocation(latitude, longitude, distance, skills);
+		for(Course course : courses) {
+			for(ResourceLink link : course.getSkillsLink()) {
+				if(!profile.getSkills().contains(link.getUri())) {
+					link.setMatching(1);
+				}
+			}
+		}
+		return courses;
 	}
 	
 	private int checkSkillMatching(List<String> skills, Profile profile) {

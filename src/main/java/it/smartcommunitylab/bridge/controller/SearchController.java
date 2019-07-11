@@ -131,4 +131,19 @@ public class SearchController extends MainController {
 				distance, occupationUri, extId);
 		return result;
 	}
+	
+	@GetMapping(value = "/api/search/coursebyprofile")
+	public List<Course> searchCourseByProfileAndOccupation(
+			@RequestParam double latitude,
+			@RequestParam double longitude,
+			@RequestParam double distance,
+			@RequestParam String occupationUri,
+			@RequestParam String extId) throws Exception {
+		List<Course> result = resourceMatching.findCourseByProfile(extId, occupationUri, 
+				latitude, longitude, distance);
+		logger.debug("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), latitude + "," + longitude, 
+				distance, occupationUri, extId);
+		return result;
+	}
+	
 }
