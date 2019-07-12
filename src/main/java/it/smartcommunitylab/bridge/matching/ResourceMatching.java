@@ -62,18 +62,12 @@ public class ResourceMatching {
 		return result;
 	}
 	
-	public List<JobOffer> findJobOfferByProfile(String profileExtId, String occupationUri,
+	public List<JobOffer> findJobOfferByProfile(String profileExtId, String iscoCode,
 			double latitude, double longitude, double distance) throws Exception {
 		Profile profile = profileRepository.findByExtId(profileExtId);
 		if(profile == null) {
 			throw new EntityNotFoundException("profile not found");
 		}
-		Optional<Occupation> optional = occupationRepository.findById(occupationUri);
-		if(optional.isEmpty()) {
-			throw new EntityNotFoundException("occupation not found");
-		}
-		Occupation occupation = optional.get();
-		String iscoCode = occupation.getIscoCode();
 		iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
 		List<JobOffer> offers = jobOfferRepository.findByLocation(latitude, longitude, distance, iscoCode);
 		for(JobOffer jobOffer : offers) {
@@ -91,19 +85,22 @@ public class ResourceMatching {
 		return offers;
 	}
 	
-	public List<Course> findCourseByProfile(String profileExtId, String occupationUri,
+	public List<Course> findCourseByProfile(String profileExtId, String iscoCode,
 			double latitude, double longitude, double distance) throws Exception {
 		Profile profile = profileRepository.findByExtId(profileExtId);
 		if(profile == null) {
 			throw new EntityNotFoundException("profile not found");
 		}
-		Optional<Occupation> optional = occupationRepository.findById(occupationUri);
-		if(optional.isEmpty()) {
-			throw new EntityNotFoundException("occupation not found");
-		}
-		Occupation occupation = optional.get();
 		List<String> skills = new ArrayList<String>();
-		skills.addAll(occupation.getHasEssentialSkill());
+		iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
+		List<Occupation> occupations = occupationRepository.findByIscoCode(iscoCode);
+		for (Occupation occupation : occupations) {
+			for(String skill : occupation.getHasEssentialSkill()) {
+				if(!skills.contains(skill)) {
+					skills.add(skill);
+				}
+			}
+		}
 		for(String skill : skills) {
 			if(profile.getSkills().contains(skill)) {
 				skills.remove(skill);

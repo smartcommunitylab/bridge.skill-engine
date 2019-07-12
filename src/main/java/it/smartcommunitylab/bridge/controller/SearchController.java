@@ -123,12 +123,12 @@ public class SearchController extends MainController {
 			@RequestParam double latitude,
 			@RequestParam double longitude,
 			@RequestParam double distance,
-			@RequestParam String occupationUri,
+			@RequestParam String iscoCode,
 			@RequestParam String extId) throws Exception {
-		List<JobOffer> result = resourceMatching.findJobOfferByProfile(extId, occupationUri, 
+		List<JobOffer> result = resourceMatching.findJobOfferByProfile(extId, iscoCode, 
 				latitude, longitude, distance);
-		logger.debug("searchJobOfferByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), latitude + "," + longitude, 
-				distance, occupationUri, extId);
+		logger.debug("searchJobOfferByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
+				latitude + "," + longitude, distance, iscoCode, extId);
 		return result;
 	}
 	
@@ -137,12 +137,12 @@ public class SearchController extends MainController {
 			@RequestParam double latitude,
 			@RequestParam double longitude,
 			@RequestParam double distance,
-			@RequestParam String occupationUri,
+			@RequestParam String iscoCode,
 			@RequestParam String extId) throws Exception {
-		List<Course> result = resourceMatching.findCourseByProfile(extId, occupationUri, 
+		List<Course> result = resourceMatching.findCourseByProfile(extId, iscoCode, 
 				latitude, longitude, distance);
-		logger.debug("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), latitude + "," + longitude, 
-				distance, occupationUri, extId);
+		logger.debug("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
+				latitude + "," + longitude, distance, iscoCode, extId);
 		return result;
 	}
 	
