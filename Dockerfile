@@ -13,7 +13,8 @@ RUN mvn clean install -Dmaven.test.skip=true
 
 FROM adoptopenjdk/openjdk11:alpine
 ENV FOLDER=/tmp/skill-engine/target
-ENV APP=skill-engine-0.1.jar
+ARG VER=0.1
+ENV APP=skill-engine-${VER}.jar
 ARG USER=bridge
 ARG USER_ID=3002
 ARG USER_GROUP=bridge
@@ -31,4 +32,4 @@ RUN mkdir indexes && chown ${USER}:${USER_GROUP} indexes
 COPY --from=mvn --chown=bridge:bridge ${FOLDER}/${APP} /home/${USER}/app/bridge.jar
 
 USER bridge
-CMD ["java", "-jar", "bridge.jar"]
+CMD ["java", "-jar", "${APP}"]
