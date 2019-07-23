@@ -1,5 +1,6 @@
 package it.smartcommunitylab.bridge.common;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class Utils {
 	private static ObjectMapper fullMapper = new ObjectMapper();
@@ -84,6 +86,14 @@ public class Utils {
 	public static <T> T toObject(JsonNode in, Class<T> cls) throws JsonProcessingException {
 		return Utils.fullMapper.treeToValue(in, cls);
 	}
+	
+	public static JsonNode createJsonNode() {
+		return Utils.fullMapper.createObjectNode();
+	}
+	
+	public static ArrayNode createJsonArray() {
+		return Utils.fullMapper.createArrayNode();
+	}
 
 	public static Map<String,String> handleError(Exception exception) {
 		Map<String,String> errorMap = new HashMap<String,String>();
@@ -92,4 +102,14 @@ public class Utils {
 		return errorMap;
 	}
 	
+	public static void traverse(File parentNode, List<File> files) {
+		if (parentNode.isDirectory()) {
+			File childNodes[] = parentNode.listFiles();
+			for (File childNode : childNodes) {
+				traverse(childNode, files);
+			}
+		} else {
+			files.add(parentNode);
+		}
+	}
 }

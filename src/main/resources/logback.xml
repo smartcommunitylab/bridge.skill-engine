@@ -59,6 +59,10 @@
   		
   <logger name="eu.fbk.dh.tint" level="ERROR" additivity="false">
     <appender-ref ref="FILE" />
+  </logger>
+  		
+  <logger name="org.apache.tika" level="ERROR" additivity="false">
+    <appender-ref ref="FILE" />
   </logger>		
 
 </configuration>

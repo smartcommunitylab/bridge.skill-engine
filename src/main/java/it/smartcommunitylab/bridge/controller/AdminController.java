@@ -1,5 +1,10 @@
 package it.smartcommunitylab.bridge.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,8 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import it.smartcommunitylab.bridge.common.Utils;
 import it.smartcommunitylab.bridge.csv.CsvManager;
 import it.smartcommunitylab.bridge.extsource.AgenziaLavoroWrapper;
+import it.smartcommunitylab.bridge.extsource.CogitoAnalyzer;
 
 @RestController
 public class AdminController {
@@ -18,6 +25,8 @@ public class AdminController {
 	CsvManager csvManager;
 	@Autowired
 	AgenziaLavoroWrapper agenziaLavoroWrapper;
+	@Autowired
+	CogitoAnalyzer cogitoAnalyzer;
 	
 	@GetMapping(value = "/admin/import/all")
 	public void importAll(@RequestParam String path) throws Exception {
@@ -45,6 +54,15 @@ public class AdminController {
 		logger.info("importAll:{}", path);
 	}
 	
+	@GetMapping(value = "/admin/import/index/all")
+	public void indexAll(@RequestParam String path) throws Exception {
+		csvManager.indexSkills(path + "/skills_it.csv");
+		csvManager.indexSkillGroups(path + "/skillGroups_it.csv");
+		csvManager.indexOccupations(path + "/occupations_it.csv");
+		csvManager.indexOccupationIscoGroups(path + "/ISCOGroups_it.csv");
+		logger.info("indexAll:{}", path);
+	}
+	
 	@GetMapping(value = "/admin/import/iscoistat")
 	public void importIscoIstat(@RequestParam String path) throws Exception {
 		csvManager.importIscoIstatMap(path);
@@ -61,6 +79,22 @@ public class AdminController {
 	public void importCourses() throws Exception {
 		int courses = agenziaLavoroWrapper.getCourses();
 		logger.info("importCourses:{}", courses);
+	}
+	
+	@GetMapping(value = "/admin/import/personaldata")
+	public void importPesonalData(@RequestParam String path) throws Exception {
+		List<File> files = new ArrayList<>();
+		File inputFolder = new File(path);
+		Utils.traverse(inputFolder, files);
+		for(File file : files) {
+			String inputFile = file.getAbsolutePath();
+			if(!inputFile.toLowerCase().endsWith(".odt")) {
+				logger.info("importPesonalData: skip {}", inputFile);
+				continue;
+			}
+			String json = cogitoAnalyzer.analyzePersonalData(new FileInputStream(inputFile));
+			logger.info("importPesonalData:{} / {}", json, inputFile);
+		}
 	}
 	
 }
