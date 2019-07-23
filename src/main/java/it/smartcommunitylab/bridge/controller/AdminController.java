@@ -70,8 +70,9 @@ public class AdminController {
 	}
 	
 	@GetMapping(value = "/admin/import/job")
-	public void importJobOffers(@RequestParam int endCount) throws Exception {
-		int jobOffers = agenziaLavoroWrapper.getJobOffers(endCount);
+	public void importJobOffers(@RequestParam int startCount, 
+			@RequestParam int endCount) throws Exception {
+		int jobOffers = agenziaLavoroWrapper.getJobOffers(startCount, endCount);
 		logger.info("importJobOffers:{}", jobOffers);
 	}
 	
