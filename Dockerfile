@@ -32,4 +32,4 @@ RUN mkdir indexes && chown ${USER}:${USER_GROUP} indexes
 COPY --from=mvn --chown=bridge:bridge ${FOLDER}/${APP} /home/${USER}/app/bridge.jar
 
 USER bridge
-CMD ["java", "-jar", "${APP}"]
+CMD ["java", "-XX:MaxRAMPercentage=50", "-jar", "bridge.jar"]

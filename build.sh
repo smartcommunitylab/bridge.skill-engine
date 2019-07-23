@@ -14,6 +14,7 @@ curl -s -X POST $URL -d $CHAT -d "text=$Msg"
 #ssh -i sshkey -o "StrictHostKeyChecking no" $USR@$IP "sudo service lora-tb-conn stop && /home/$USR/sources/deploy-lora-tb-conn.sh && echo VER=${RELEASE} > /home/dev/lora-tb-connector-env && sudo service lora-tb-conn start "
 docker login -u $USERNAME -p $PASSWORD
 docker build -t smartcommunitylab/bridge:latest --build-arg VER=$RELEASE .
+docker push smartcommunitylab/bridge:latest
 statusCode=$?
 if [[ $statusCode -eq 0 ]]; then
   Msg="$TSSRV Immagine Docker creata con successo"
