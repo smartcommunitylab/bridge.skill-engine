@@ -367,10 +367,9 @@ public class AgenziaLavoroWrapper {
 		return jobOffer;
 	}
 	
-	public int getJobOffers() {
+	public int getJobOffers(int endCount) {
 		String href = "https://www.sil.provincia.tn.it/welcomepage/vacancy/view/";
 		int stored = 0;
-		int endCount = 26000;
 		for(int count = 25000; count < endCount; count++) {
 			try {
 				JobOffer jobOffer = getJobOffer(href + count);
