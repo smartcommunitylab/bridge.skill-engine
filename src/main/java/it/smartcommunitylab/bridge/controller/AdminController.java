@@ -54,7 +54,7 @@ public class AdminController {
 		logger.info("importAll:{}", path);
 	}
 	
-	@GetMapping(value = "/admin/import/index/all")
+	@GetMapping(value = "/admin/index/all")
 	public void indexAll(@RequestParam String path) throws Exception {
 		csvManager.indexSkills(path + "/skills_it.csv");
 		csvManager.indexSkillGroups(path + "/skillGroups_it.csv");
