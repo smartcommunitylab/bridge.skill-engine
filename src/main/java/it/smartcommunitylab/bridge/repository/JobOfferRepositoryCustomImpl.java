@@ -39,6 +39,7 @@ public class JobOfferRepositoryCustomImpl implements JobOfferRepositoryCustom {
 		NearQuery query = NearQuery.near(location).maxDistance(geoDistance);
 		Criteria criteria = Criteria.where("expirationDate").gte(new Date());
 		if(Utils.isNotEmpty(iscoCode)) {
+			iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
 			criteria = criteria.and("iscoCode").regex("^" + iscoCode);
 		}
 		query = query.query(Query.query(criteria));

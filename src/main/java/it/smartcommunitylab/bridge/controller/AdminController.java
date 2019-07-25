@@ -16,6 +16,7 @@ import it.smartcommunitylab.bridge.common.Utils;
 import it.smartcommunitylab.bridge.csv.CsvManager;
 import it.smartcommunitylab.bridge.extsource.AgenziaLavoroWrapper;
 import it.smartcommunitylab.bridge.extsource.CogitoAnalyzer;
+import it.smartcommunitylab.bridge.model.cogito.CogitoProfile;
 
 @RestController
 public class AdminController {
@@ -93,8 +94,8 @@ public class AdminController {
 				logger.info("importPesonalData: skip {}", inputFile);
 				continue;
 			}
-			String json = cogitoAnalyzer.analyzePersonalData(new FileInputStream(inputFile));
-			logger.info("importPesonalData:{} / {}", json, inputFile);
+			CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(new FileInputStream(inputFile));
+			logger.info("importPesonalData:{} / {}", profile, inputFile);
 		}
 	}
 	
