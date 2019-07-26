@@ -1,13 +1,10 @@
 package it.smartcommunitylab.bridge.extsource;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,19 +62,16 @@ public class CogitoAnalyzer {
 		}
 	}
 	
-	public CogitoProfile analyzePersonalData(InputStream stream) {
-		BodyContentHandler handler = new BodyContentHandler();
-    AutoDetectParser parser = new AutoDetectParser();
-    Metadata metadata = new Metadata();
+	public CogitoProfile analyzePersonalData(File file) {
     try {
-    	parser.parse(stream, handler, metadata);
-    	String content = handler.toString();
+    	String json = HTTPUtils.uploadMultipartFile(personalDataAnalyzerURL + "all_by_file", file);
+    	JsonNode rootNode = Utils.readJsonFromString(json);
     	CogitoProfile profile = new CogitoProfile();
-    	analyzePersonalData(content, profile);
-    	analyzeDegrees(content, profile);
-    	analyzeLanguages(content, profile);
-    	analyzeITKnowledges(content, profile);
-    	analyzeWorkExperiences(content, profile);
+    	analyzePersonalData(rootNode, profile);
+    	analyzeDegrees(rootNode, profile);
+    	analyzeLanguages(rootNode, profile);
+    	analyzeITKnowledges(rootNode, profile);
+    	analyzeWorkExperiences(rootNode, profile);
     	if(profile.getWorkExperiences().size() > 0) {
     		addOccupations(profile);
     	}
@@ -88,24 +82,22 @@ public class CogitoAnalyzer {
 		return null;
 	}
 	
-	private void analyzePersonalData(String content, 
+	private void analyzePersonalData(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		PersonalData result = new PersonalData();
-		String aspect = analyzeAspect(personalDataAnalyzerURL + "personal_data", content);
-		JsonNode rootNode = Utils.readJsonFromString(aspect);
-		if(rootNode.hasNonNull("PERSONAL_DATA")) {
-			result = Utils.toObject(rootNode.get("PERSONAL_DATA"), PersonalData.class);
+		JsonNode jsonNode = rootNode.findValue("PERSONAL_DATA");
+		if(jsonNode != null) {
+			result = Utils.toObject(jsonNode, PersonalData.class);
 			profile.setPersonalData(result);			
 		}
 	}
 	
-	private void analyzeLanguages(String content, 
+	private void analyzeLanguages(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<Language> languages = new ArrayList<>();
-		String aspect = analyzeAspect(personalDataAnalyzerURL + "languages", content);
-		JsonNode rootNode = Utils.readJsonFromString(aspect);
-		if(rootNode.hasNonNull("LANGUAGES")) {
-			for(JsonNode node : rootNode.get("LANGUAGES")) {
+		JsonNode jsonNode = rootNode.findValue("LANGUAGES");
+		if(jsonNode != null) {
+			for(JsonNode node : jsonNode) {
 				Language language = Utils.toObject(node, Language.class);
 				languages.add(language);
 			}
@@ -115,13 +107,12 @@ public class CogitoAnalyzer {
 		}
 	}
 	
-	private void analyzeDegrees(String content, 
+	private void analyzeDegrees(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<Degree> degrees = new ArrayList<>();
-		String aspect = analyzeAspect(personalDataAnalyzerURL + "degrees", content);
-		JsonNode rootNode = Utils.readJsonFromString(aspect);
-		if(rootNode.hasNonNull("DEGREES")) {
-			for(JsonNode node : rootNode.get("DEGREES")) {
+		JsonNode jsonNode = rootNode.findValue("DEGREES");
+		if(jsonNode != null) {
+			for(JsonNode node : jsonNode) {
 				Degree degree = Utils.toObject(node, Degree.class);
 				degrees.add(degree);
 			}
@@ -131,13 +122,12 @@ public class CogitoAnalyzer {
 		}
 	}
 	
-	private void analyzeWorkExperiences(String content, 
+	private void analyzeWorkExperiences(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<WorkExperience> workExperiences = new ArrayList<>();
-		String aspect = analyzeAspect(personalDataAnalyzerURL + "work_experiences", content);
-		JsonNode rootNode = Utils.readJsonFromString(aspect);
-		if(rootNode.hasNonNull("WORK_EXPERIENCES")) {
-			for(JsonNode node : rootNode.get("WORK_EXPERIENCES")) {
+		JsonNode jsonNode = rootNode.findValue("WORK_EXPERIENCES");
+		if(jsonNode != null) {
+			for(JsonNode node : jsonNode) {
 				WorkExperience experience = Utils.toObject(node, WorkExperience.class);
 				workExperiences.add(experience);
 			}
@@ -147,29 +137,18 @@ public class CogitoAnalyzer {
 		}
 	}
 	
-	private void analyzeITKnowledges(String content, 
+	private void analyzeITKnowledges(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<String> itKnowledges = new ArrayList<>();
-		String aspect = analyzeAspect(personalDataAnalyzerURL + "it_knowledge", content);
-		JsonNode rootNode = Utils.readJsonFromString(aspect);
-		if(rootNode.hasNonNull("IT_KNOWLEDGE")) {
-			for(JsonNode node : rootNode.get("IT_KNOWLEDGE")) {
+		JsonNode jsonNode = rootNode.findValue("IT_KNOWLEDGE");
+		if(jsonNode != null) {
+			for(JsonNode node : jsonNode) {
 				itKnowledges.add(node.textValue());
 			}
 		}
 		if(itKnowledges.size() > 0) {
 			profile.setItKnowledges(itKnowledges);
 		}
-	}
-	
-	private String analyzeAspect(String url, String content) {
-		String jsonString = "{}";
-		try {
-			jsonString = HTTPUtils.post(url, content, null, null, null);
-		} catch (Exception e) {
-			logger.warn("analyzeAspect error:{}", e.getMessage());
-		}
-		return jsonString;
 	}
 	
 	private void addOccupations(CogitoProfile profile) {

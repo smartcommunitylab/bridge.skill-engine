@@ -1,7 +1,6 @@
 package it.smartcommunitylab.bridge.controller;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,7 +93,7 @@ public class AdminController {
 				logger.info("importPesonalData: skip {}", inputFile);
 				continue;
 			}
-			CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(new FileInputStream(inputFile));
+			CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);
 			logger.info("importPesonalData:{} / {}", profile, inputFile);
 		}
 	}

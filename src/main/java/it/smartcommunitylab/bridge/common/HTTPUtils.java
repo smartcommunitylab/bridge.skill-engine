@@ -1,6 +1,7 @@
 package it.smartcommunitylab.bridge.common;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -9,6 +10,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Base64;
+
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -225,5 +235,20 @@ public class HTTPUtils {
 		String res = new String(response.toString().getBytes(), Charset.forName("UTF-8"));
 	
 		return res;
+	}
+	
+	public static String uploadMultipartFile(String serverUrl, File file) throws Exception {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		FileSystemResource fsr = new FileSystemResource(file);
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+		body.add("file", fsr);
+		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+		RestTemplate restTemplate = new RestTemplate();
+		ResponseEntity<String> response = restTemplate.postForEntity(serverUrl, requestEntity, String.class);
+		if(response.getStatusCodeValue() != 200) {
+			throw new RuntimeException("uploadMultipartFile error:" + response.getBody());
+		}
+		return response.getBody();
 	}
 }
