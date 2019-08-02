@@ -90,7 +90,7 @@ public class LuceneManager {
 	public String normalizeText(String...strings) {
 		StringBuffer sb = new StringBuffer();
 		for (String text : strings) {
-			Annotation stanfordAnnotation = pipeline.runRaw(text);
+			Annotation stanfordAnnotation = pipeline.runRaw(text.toLowerCase());
 			for(CoreMap sentence : stanfordAnnotation.get(SentencesAnnotation.class)) {
 				for(CoreLabel token : sentence.get(TokensAnnotation.class)) {
 					if(token.lemma().equalsIgnoreCase("[PUNCT]")) {
