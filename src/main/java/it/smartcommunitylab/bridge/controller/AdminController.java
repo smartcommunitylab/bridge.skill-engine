@@ -90,7 +90,7 @@ public class AdminController {
 		for(File file : files) {
 			String inputFile = file.getAbsolutePath();
 			if(!inputFile.toLowerCase().endsWith(".odt")) {
-				logger.info("importPesonalData: skip {}", inputFile);
+				logger.debug("importPesonalData: skip {}", inputFile);
 				continue;
 			}
 			CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);

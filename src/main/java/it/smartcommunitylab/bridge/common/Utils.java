@@ -94,6 +94,15 @@ public class Utils {
 	public static ArrayNode createJsonArray() {
 		return Utils.fullMapper.createArrayNode();
 	}
+	
+	public static String writeJson(Object obj) {
+		String result = "";
+		try {
+			result = Utils.fullMapper.writeValueAsString(obj);
+		} catch (Exception e) {
+		}
+		return result; 
+	}
 
 	public static Map<String,String> handleError(Exception exception) {
 		Map<String,String> errorMap = new HashMap<String,String>();

@@ -73,7 +73,7 @@ public class CogitoAnalyzer {
     	analyzeITKnowledges(rootNode, profile);
     	analyzeWorkExperiences(rootNode, profile);
     	if(profile.getWorkExperiences().size() > 0) {
-    		addOccupations(profile);
+    		addOccupations1(profile);
     	}
     	return profile;
 		} catch (Exception e) {
@@ -151,23 +151,59 @@ public class CogitoAnalyzer {
 		}
 	}
 	
-	private void addOccupations(CogitoProfile profile) {
+	private void addOccupations1(CogitoProfile profile) {
 		for(WorkExperience experience : profile.getWorkExperiences()) {
+			List<String> occupations = new ArrayList<>();
 			for(String position : experience.getPOSITIONS()) {
 				try {
-					List<String> occupations = new ArrayList<>();
-					List<String> iscoCodes = new ArrayList<>();
-					List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 10);
+					List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, 
+							Const.CONCEPT_OCCCUPATION, null, 20);
 					for(TextDoc textDoc : iscoGroupTextList) {
-						if(textDoc.getScore() < 4.0) {
+						if(textDoc.getScore() < 4.5) {
+							continue;
+						}
+						String uri = textDoc.getFields().get("uri");
+						if(!occupations.contains(uri)) {
+							Optional<Occupation> optional = occupationRepository.findById(uri);
+							if(optional.isPresent()) {
+								Occupation occupation = optional.get();
+								occupations.add(occupation.getUri());
+								ResourceLink link = new ResourceLink();
+								link.setUri(occupation.getUri());
+								link.setConceptType(occupation.getConceptType());
+								link.setPreferredLabel(occupation.getPreferredLabel());
+								experience.getOccupationsLink().add(link);
+							}
+						}						
+					}
+				} catch (Exception e) {
+					logger.warn("addOccupations error:{}", e.getMessage());
+				}
+			}
+			logger.info("addOccupations:{}", Utils.writeJson(experience));
+		}
+	}
+	
+	private void addOccupations2(CogitoProfile profile) {
+		for(WorkExperience experience : profile.getWorkExperiences()) {
+			List<String> occupations = new ArrayList<>();
+			for(String position : experience.getPOSITIONS()) {
+				try {
+					List<String> iscoCodes = new ArrayList<>();
+					List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 5);
+					for(TextDoc textDoc : iscoGroupTextList) {
+						if(textDoc.getScore() < 4.5) {
 							continue;
 						}
 						String iscoCode = textDoc.getFields().get("iscoGroup");
 						iscoCodes.add(iscoCode);
 					}
 					for(String iscoCode : iscoCodes) {
-						List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 20);
+						List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 10);
 						for(TextDoc textDoc : occupationTextList) {
+							if(textDoc.getScore() < 4.5) {
+								continue;
+							}
 							String uri = textDoc.getFields().get("uri");
 							if(!occupations.contains(uri)) {
 								Optional<Occupation> optional = occupationRepository.findById(uri);
@@ -179,6 +215,7 @@ public class CogitoAnalyzer {
 									link.setConceptType(occupation.getConceptType());
 									link.setPreferredLabel(occupation.getPreferredLabel());
 									experience.getOccupationsLink().add(link);
+									
 								}
 							}
 						}
@@ -187,6 +224,7 @@ public class CogitoAnalyzer {
 					logger.warn("addOccupations error:{}", e.getMessage());
 				}
 			}
+			logger.info("addOccupations:{}", Utils.writeJson(experience));
 		}
 	}
 
