@@ -98,4 +98,11 @@ public class AdminController {
 		}
 	}
 	
+	@GetMapping(value = "/admin/import/personaldata/file")
+	public void importSinglePesonalData(@RequestParam String path) throws Exception {
+		File file = new File(path);
+		CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);
+		logger.info("importSinglePesonalData:{} / {}", profile, path);
+	}
+	
 }
