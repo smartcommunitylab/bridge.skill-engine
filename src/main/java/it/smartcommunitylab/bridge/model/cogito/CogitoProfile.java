@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CogitoProfile {
+	String filename;
 	PersonalData personalData;
 	List<WorkExperience> workExperiences = new ArrayList<>();
 	List<Degree> degrees = new ArrayList<>();
@@ -39,5 +40,11 @@ public class CogitoProfile {
 	}
 	public void setItKnowledges(List<String> itKnowledges) {
 		this.itKnowledges = itKnowledges;
+	}
+	public String getFilename() {
+		return filename;
+	}
+	public void setFilename(String filename) {
+		this.filename = filename;
 	}
 }

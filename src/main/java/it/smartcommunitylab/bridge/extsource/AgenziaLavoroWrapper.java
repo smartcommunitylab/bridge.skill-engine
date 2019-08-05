@@ -206,7 +206,7 @@ public class AgenziaLavoroWrapper {
 		List<ResourceLink> skillsLink = new ArrayList<>(); 
 		List<TextDoc> skillTextList = luceneManager.searchByFields(title, Const.CONCEPT_SKILL, null, 10);
 		for (TextDoc textDoc : skillTextList) {
-			if(textDoc.getScore() < 4.0) {
+			if(textDoc.getScore() < 4.5) {
 				continue;
 			}
 			Optional<Skill> optional = skillRepository.findById(textDoc.getFields().get("uri"));

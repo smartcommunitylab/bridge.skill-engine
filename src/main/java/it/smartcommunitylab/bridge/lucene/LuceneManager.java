@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -137,7 +139,11 @@ public class LuceneManager {
 			String iscoGroup, int maxResult) throws ParseException, IOException {
 		BooleanQuery booleanQuery = null;
 		
-		QueryParser parser = new QueryParser("text", analyzer);
+		String[] fields = new String[]{"preferredLabelNormalized", "altLabelsNormalized"};
+		Map<String, Float> boosts = new HashMap<String, Float>();
+		boosts.put("preferredLabelNormalized", Float.valueOf(1.0f));
+		boosts.put("altLabelsNormalized", Float.valueOf(0.75f));
+		QueryParser parser = new MultiFieldQueryParser(fields, analyzer, boosts);
 		Query fieldQuery = parser.parse(QueryParser.escape(normalizeText(text)));
 		
 		SimpleQueryParser simpleParser = new SimpleQueryParser(analyzer, "conceptType");
