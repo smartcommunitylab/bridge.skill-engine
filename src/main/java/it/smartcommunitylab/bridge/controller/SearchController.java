@@ -37,7 +37,7 @@ public class SearchController extends MainController {
 		List<TextDoc> result = null;
 		text = StringUtils.strip(text);
 		if(StringUtils.isEmpty(conceptType)) {
-			result = luceneManager.searchByLabel(text, 20, "text");
+			result = luceneManager.searchByLabel(text, 20, "preferredLabelNormalized", "altLabelsNormalized");
 		} else {
 			result = luceneManager.searchByFields(text, conceptType, null, 20);
 		}

@@ -328,8 +328,9 @@ public class CsvManager {
 			doc.add(new Field("conceptType", record.get("conceptType"), TextField.TYPE_STORED));
 			doc.add(new Field("preferredLabel", record.get("preferredLabel"), TextField.TYPE_STORED));
 			doc.add(new Field("altLabels", record.get("altLabels"), TextField.TYPE_STORED));
-			doc.add(new Field("text", 
-					luceneManager.normalizeText(record.get("preferredLabel"), record.get("altLabels")), 
+			doc.add(new Field("preferredLabelNormalized", luceneManager.normalizeText(record.get("preferredLabel")), 
+					TextField.TYPE_STORED));
+			doc.add(new Field("altLabelsNormalized", luceneManager.normalizeText(record.get("altLabels")), 
 					TextField.TYPE_STORED));
 			docs.add(doc);
 		}
@@ -353,8 +354,9 @@ public class CsvManager {
 			doc.add(new Field("conceptType", record.get("conceptType"), TextField.TYPE_STORED));
 			doc.add(new Field("preferredLabel", record.get("preferredLabel"), TextField.TYPE_STORED));
 			doc.add(new Field("altLabels", record.get("altLabels"), TextField.TYPE_STORED));
-			doc.add(new Field("text", 
-					luceneManager.normalizeText(record.get("preferredLabel"), record.get("altLabels")), 
+			doc.add(new Field("preferredLabelNormalized", luceneManager.normalizeText(record.get("preferredLabel")), 
+					TextField.TYPE_STORED));
+			doc.add(new Field("altLabelsNormalized", luceneManager.normalizeText(record.get("altLabels")), 
 					TextField.TYPE_STORED));
 			docs.add(doc);
 		}
@@ -380,8 +382,9 @@ public class CsvManager {
 			doc.add(new Field("preferredLabel", record.get("preferredLabel"), TextField.TYPE_STORED));
 			doc.add(new Field("altLabels", record.get("altLabels"), TextField.TYPE_STORED));
 			doc.add(new Field("iscoGroup", record.get("iscoGroup"), TextField.TYPE_STORED));
-			doc.add(new Field("text", 
-					luceneManager.normalizeText(record.get("preferredLabel"), record.get("altLabels")), 
+			doc.add(new Field("preferredLabelNormalized", luceneManager.normalizeText(record.get("preferredLabel")), 
+					TextField.TYPE_STORED));
+			doc.add(new Field("altLabelsNormalized", luceneManager.normalizeText(record.get("altLabels")), 
 					TextField.TYPE_STORED));
 			docs.add(doc);
 		}
@@ -407,8 +410,9 @@ public class CsvManager {
 			doc.add(new Field("preferredLabel", record.get("preferredLabel"), TextField.TYPE_STORED));
 			doc.add(new Field("altLabels", record.get("altLabels"), TextField.TYPE_STORED));
 			doc.add(new Field("iscoGroup", record.get("code"), TextField.TYPE_STORED));
-			doc.add(new Field("text", 
-					luceneManager.normalizeText(record.get("preferredLabel"), record.get("altLabels")), 
+			doc.add(new Field("preferredLabelNormalized", luceneManager.normalizeText(record.get("preferredLabel")), 
+					TextField.TYPE_STORED));
+			doc.add(new Field("altLabelsNormalized", luceneManager.normalizeText(record.get("altLabels")), 
 					TextField.TYPE_STORED));
 			docs.add(doc);
 		}

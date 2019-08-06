@@ -1,7 +1,6 @@
 package it.smartcommunitylab.bridge.controller;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +15,7 @@ import it.smartcommunitylab.bridge.common.Utils;
 import it.smartcommunitylab.bridge.csv.CsvManager;
 import it.smartcommunitylab.bridge.extsource.AgenziaLavoroWrapper;
 import it.smartcommunitylab.bridge.extsource.CogitoAnalyzer;
+import it.smartcommunitylab.bridge.model.cogito.CogitoProfile;
 
 @RestController
 public class AdminController {
@@ -90,12 +90,19 @@ public class AdminController {
 		for(File file : files) {
 			String inputFile = file.getAbsolutePath();
 			if(!inputFile.toLowerCase().endsWith(".odt")) {
-				logger.info("importPesonalData: skip {}", inputFile);
+				logger.debug("importPesonalData: skip {}", inputFile);
 				continue;
 			}
-			String json = cogitoAnalyzer.analyzePersonalData(new FileInputStream(inputFile));
-			logger.info("importPesonalData:{} / {}", json, inputFile);
+			CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);
+			logger.info("importPesonalData:{} / {}", profile, inputFile);
 		}
+	}
+	
+	@GetMapping(value = "/admin/import/personaldata/file")
+	public void importSinglePesonalData(@RequestParam String path) throws Exception {
+		File file = new File(path);
+		CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);
+		logger.info("importSinglePesonalData:{} / {}", profile, path);
 	}
 	
 }
