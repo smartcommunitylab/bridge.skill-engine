@@ -325,8 +325,10 @@ public class AgenziaLavoroWrapper {
 		
 		List<String> occupations = new ArrayList<>();
 		List<ResourceLink> occupationsLink = new ArrayList<>();
-		List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(title, Const.CONCEPT_ISCO_GROUP, null, 10);
-		List<TextDoc> occupationTextList = luceneManager.searchByFields(title, Const.CONCEPT_OCCCUPATION, null, 20);
+		List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(title, Const.CONCEPT_ISCO_GROUP, 
+				iscoCode, 5);
+		List<TextDoc> occupationTextList = luceneManager.searchByFields(title, Const.CONCEPT_OCCCUPATION, 
+				iscoCode, 10);
 		List<Occupation> occupationList = occupationRepository.findByIscoCode("^" + iscoCode);
 		for (Occupation occupation : occupationList) {
 			if(containsUri(iscoGroupTextList, occupation.getUri()) || 
