@@ -101,12 +101,13 @@ public class ResourceMatching {
 				}
 			}
 		}
+		List<String> skillsToSearch = new ArrayList<String>();
 		for(String skill : skills) {
-			if(profile.getSkills().contains(skill)) {
-				skills.remove(skill);
+			if(!profile.getSkills().contains(skill)) {
+				skillsToSearch.add(skill);
 			}
 		}
-		List<Course> courses = courseRepository.findByLocation(latitude, longitude, distance, skills);
+		List<Course> courses = courseRepository.findByLocation(latitude, longitude, distance, skillsToSearch);
 		for(Course course : courses) {
 			for(ResourceLink link : course.getSkillsLink()) {
 				if(!profile.getSkills().contains(link.getUri())) {
