@@ -16,6 +16,7 @@ import it.smartcommunitylab.bridge.common.Const;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.matching.ResourceMatching;
 import it.smartcommunitylab.bridge.model.Course;
+import it.smartcommunitylab.bridge.model.CourseResult;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.Skill;
@@ -133,16 +134,16 @@ public class SearchController extends MainController {
 	}
 	
 	@GetMapping(value = "/api/search/coursebyprofile")
-	public List<Course> searchCourseByProfileAndOccupation(
+	public List<CourseResult> searchCourseByProfileAndOccupation(
 			@RequestParam double latitude,
 			@RequestParam double longitude,
 			@RequestParam double distance,
-			@RequestParam String iscoCode,
+			@RequestParam String occupationUri,
 			@RequestParam String extId) throws Exception {
-		List<Course> result = resourceMatching.findCourseByProfile(extId, iscoCode, 
+		List<CourseResult> result = resourceMatching.findCourseByProfile(extId, occupationUri, 
 				latitude, longitude, distance);
 		logger.debug("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
-				latitude + "," + longitude, distance, iscoCode, extId);
+				latitude + "," + longitude, distance, occupationUri, extId);
 		return result;
 	}
 	

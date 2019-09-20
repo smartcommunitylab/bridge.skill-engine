@@ -1,7 +1,9 @@
 package it.smartcommunitylab.bridge.matching;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +16,7 @@ import it.smartcommunitylab.bridge.common.Const;
 import it.smartcommunitylab.bridge.exception.EntityNotFoundException;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.model.Course;
+import it.smartcommunitylab.bridge.model.CourseResult;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.Profile;
@@ -85,37 +88,64 @@ public class ResourceMatching {
 		return offers;
 	}
 	
-	public List<Course> findCourseByProfile(String profileExtId, String iscoCode,
+	public List<CourseResult> findCourseByProfile(String profileExtId, String uri, 
 			double latitude, double longitude, double distance) throws Exception {
 		Profile profile = profileRepository.findByExtId(profileExtId);
 		if(profile == null) {
 			throw new EntityNotFoundException("profile not found");
 		}
-		List<String> skills = new ArrayList<String>();
-		iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
-		List<Occupation> occupations = occupationRepository.findByIscoCode(iscoCode);
-		for (Occupation occupation : occupations) {
-			for(String skill : occupation.getHasEssentialSkill()) {
-				if(!skills.contains(skill)) {
-					skills.add(skill);
-				}
-			}
+		Optional<Occupation> optional = occupationRepository.findById(uri);
+		if(optional.isEmpty()) {
+			throw new EntityNotFoundException("occupation not found");
 		}
+		Occupation occupation = optional.get();
 		List<String> skillsToSearch = new ArrayList<String>();
-		for(String skill : skills) {
+		for(String skill : occupation.getHasEssentialSkill()) {
 			if(!profile.getSkills().contains(skill)) {
 				skillsToSearch.add(skill);
 			}
 		}
 		List<Course> courses = courseRepository.findByLocation(latitude, longitude, distance, skillsToSearch);
+		Map<String, CourseResult> result = new HashMap<>(); 
 		for(Course course : courses) {
-			for(ResourceLink link : course.getSkillsLink()) {
-				if(!profile.getSkills().contains(link.getUri())) {
-					link.setMatching(1);
-				}
+			CourseResult courseResult = result.get(course.getTitle());
+			if(courseResult == null) {
+				courseResult = new CourseResult();
+				courseResult.setTitle(course.getTitle());
+				courseResult.setMatching(checkSkillMissed(course, skillsToSearch));
+				courseResult.setCoverage(countSkillMissed(course, skillsToSearch));
+				courseResult.getCourses().add(course);
+				result.put(course.getTitle(), courseResult);
+			} else {
+				courseResult.getCourses().add(course);
 			}
 		}
-		return courses;
+		return new ArrayList<CourseResult>(result.values());
+	}
+	
+	private int countSkillMissed(Course course, List<String> skillsToSearch) {
+		int count = 0;
+		for(String skill : course.getSkills()) {
+			if(skillsToSearch.contains(skill)) {
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	private int checkSkillMissed(Course course, List<String> skillsToSearch) {
+		int tot = skillsToSearch.size();
+		int count = 0;
+		if(tot == 0) {
+			return 0;
+		}
+		for(String skill : course.getSkills()) {
+			if(skillsToSearch.contains(skill)) {
+				count++;
+			}
+		}
+		int percent = count * 100 / tot;
+		return percent;
 	}
 	
 	private int checkSkillMatching(List<String> skills, Profile profile) {
