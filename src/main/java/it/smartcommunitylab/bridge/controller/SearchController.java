@@ -2,6 +2,7 @@ package it.smartcommunitylab.bridge.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +21,7 @@ import it.smartcommunitylab.bridge.model.CourseResult;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.Skill;
+import it.smartcommunitylab.bridge.model.SuggestedCourse;
 import it.smartcommunitylab.bridge.model.TextDoc;
 
 @RestController
@@ -144,6 +146,13 @@ public class SearchController extends MainController {
 				latitude, longitude, distance);
 		logger.debug("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
 				latitude + "," + longitude, distance, occupationUri, extId);
+		return result;
+	}
+	
+	@GetMapping(value = "/api/search/suggestedcourses")
+	public Map<String, SuggestedCourse> searchSuggestedCourses() {
+		Map<String, SuggestedCourse> result = resourceMatching.findSuggestedCourses();
+		logger.debug("searchSuggestedCourses:{}", result.size());
 		return result;
 	}
 	

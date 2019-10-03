@@ -15,10 +15,13 @@ import it.smartcommunitylab.bridge.common.Utils;
 import it.smartcommunitylab.bridge.csv.CsvManager;
 import it.smartcommunitylab.bridge.extsource.AgenziaLavoroWrapper;
 import it.smartcommunitylab.bridge.extsource.CogitoAnalyzer;
+import it.smartcommunitylab.bridge.model.Profile;
+import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.cogito.CogitoProfile;
+import it.smartcommunitylab.bridge.model.cogito.WorkExperience;
 
 @RestController
-public class AdminController {
+public class AdminController extends MainController {
 	private static final transient Logger logger = LoggerFactory.getLogger(AdminController.class);
 	
 	@Autowired
@@ -83,7 +86,8 @@ public class AdminController {
 	}
 	
 	@GetMapping(value = "/admin/import/personaldata")
-	public void importPesonalData(@RequestParam String path) throws Exception {
+	public void importPesonalData(@RequestParam String path,
+			@RequestParam(required=false) boolean addProfile) throws Exception {
 		List<File> files = new ArrayList<>();
 		File inputFolder = new File(path);
 		Utils.traverse(inputFolder, files);
@@ -93,8 +97,32 @@ public class AdminController {
 				logger.debug("importPesonalData: skip {}", inputFile);
 				continue;
 			}
-			CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);
-			logger.info("importPesonalData:{} / {}", profile, inputFile);
+			CogitoProfile cogitoProfile = cogitoAnalyzer.analyzePersonalData(file);
+			if(addProfile) {
+				CogitoProfile cogitoProfileDb = cogitoProfileRepository.findByFilename(file.getName());
+				if(cogitoProfileDb != null) {
+					cogitoProfile.setId(cogitoProfile.getId());
+				}
+				cogitoProfileRepository.save(cogitoProfile);
+				Profile profile = new Profile();
+				profile.setExtId(file.getName());
+				for(WorkExperience experience : cogitoProfile.getWorkExperiences()) {
+					for(ResourceLink link : experience.getOccupationsLink()) {
+						if(!profile.getOccupations().contains(link.getUri()))  {
+							profile.getOccupations().add(link.getUri());
+						}
+					}
+				}
+				if(profile.getOccupations().size() > 0) {
+					Profile profileDb = profileRepository.findByExtId(file.getName());
+					if(profileDb != null) {
+						profile.setId(profileDb.getId());
+					}
+					profile.setOccupationsLink(completeOccupationLink(profile.getOccupations()));
+					profileRepository.save(profile);
+				}
+			}
+			logger.info("importPesonalData:{} / {}", cogitoProfile, inputFile);
 		}
 	}
 	

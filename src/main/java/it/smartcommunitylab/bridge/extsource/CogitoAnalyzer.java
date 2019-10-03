@@ -178,7 +178,8 @@ public class CogitoAnalyzer {
 				continue;
 			}
 			List<String> occupations = new ArrayList<>();
-			for(String position : experience.getPOSITIONS()) {
+			String position = String.join(",", experience.getPOSITIONS());
+			if(Utils.isNotEmpty(position)) {
 				try {
 					List<String> iscoCodes = new ArrayList<>();
 					List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 3);
