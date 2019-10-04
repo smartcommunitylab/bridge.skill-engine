@@ -97,40 +97,46 @@ public class AdminController extends MainController {
 				logger.debug("importPesonalData: skip {}", inputFile);
 				continue;
 			}
-			CogitoProfile cogitoProfile = cogitoAnalyzer.analyzePersonalData(file);
-			if(addProfile) {
-				CogitoProfile cogitoProfileDb = cogitoProfileRepository.findByFilename(file.getName());
-				if(cogitoProfileDb != null) {
-					cogitoProfile.setId(cogitoProfile.getId());
-				}
-				cogitoProfileRepository.save(cogitoProfile);
-				Profile profile = new Profile();
-				profile.setExtId(file.getName());
-				for(WorkExperience experience : cogitoProfile.getWorkExperiences()) {
-					for(ResourceLink link : experience.getOccupationsLink()) {
-						if(!profile.getOccupations().contains(link.getUri()))  {
-							profile.getOccupations().add(link.getUri());
-						}
-					}
-				}
-				if(profile.getOccupations().size() > 0) {
-					Profile profileDb = profileRepository.findByExtId(file.getName());
-					if(profileDb != null) {
-						profile.setId(profileDb.getId());
-					}
-					profile.setOccupationsLink(completeOccupationLink(profile.getOccupations()));
-					profileRepository.save(profile);
-				}
-			}
+			CogitoProfile cogitoProfile = storeProfiles(addProfile, file);
 			logger.info("importPesonalData:{} / {}", cogitoProfile, inputFile);
 		}
 	}
 	
 	@GetMapping(value = "/admin/import/personaldata/file")
-	public void importSinglePesonalData(@RequestParam String path) throws Exception {
+	public void importSinglePesonalData(@RequestParam String path,
+			@RequestParam(required=false) boolean addProfile) throws Exception {
 		File file = new File(path);
-		CogitoProfile profile = cogitoAnalyzer.analyzePersonalData(file);
-		logger.info("importSinglePesonalData:{} / {}", profile, path);
+		CogitoProfile cogitoProfile = storeProfiles(addProfile, file);
+		logger.info("importSinglePesonalData:{} / {}", cogitoProfile, path);
+	}
+
+	private CogitoProfile storeProfiles(boolean addProfile, File file) {
+		CogitoProfile cogitoProfile = cogitoAnalyzer.analyzePersonalData(file);
+		if(addProfile) {
+			CogitoProfile cogitoProfileDb = cogitoProfileRepository.findByFilename(file.getName());
+			if(cogitoProfileDb != null) {
+				cogitoProfile.setId(cogitoProfile.getId());
+			}
+			cogitoProfileRepository.save(cogitoProfile);
+			Profile profile = new Profile();
+			profile.setExtId(file.getName());
+			for(WorkExperience experience : cogitoProfile.getWorkExperiences()) {
+				for(ResourceLink link : experience.getOccupationsLink()) {
+					if(!profile.getOccupations().contains(link.getUri()))  {
+						profile.getOccupations().add(link.getUri());
+					}
+				}
+			}
+			if(profile.getOccupations().size() > 0) {
+				Profile profileDb = profileRepository.findByExtId(file.getName());
+				if(profileDb != null) {
+					profile.setId(profileDb.getId());
+				}
+				profile.setOccupationsLink(completeOccupationLink(profile.getOccupations()));
+				profileRepository.save(profile);
+			}			
+		}
+		return cogitoProfile;
 	}
 	
 }

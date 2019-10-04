@@ -141,8 +141,8 @@ public class LuceneManager {
 		
 		String[] fields = new String[]{"preferredLabelNormalized", "altLabelsNormalized"};
 		Map<String, Float> boosts = new HashMap<String, Float>();
-		boosts.put("preferredLabelNormalized", Float.valueOf(1.0f));
-		boosts.put("altLabelsNormalized", Float.valueOf(0.75f));
+		boosts.put("preferredLabelNormalized", Float.valueOf(1.05f));
+		boosts.put("altLabelsNormalized", Float.valueOf(0.90f));
 		QueryParser parser = new MultiFieldQueryParser(fields, analyzer, boosts);
 		Query fieldQuery = parser.parse(QueryParser.escape(normalizeText(text)));
 		

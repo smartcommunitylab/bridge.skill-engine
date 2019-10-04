@@ -1,10 +1,14 @@
 package it.smartcommunitylab.bridge.extsource;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +71,7 @@ public class CogitoAnalyzer {
     	String json = HTTPUtils.uploadMultipartFile(personalDataAnalyzerURL + "all_by_file", file);
     	JsonNode rootNode = Utils.readJsonFromString(json);
     	CogitoProfile profile = new CogitoProfile();
-    	profile.setFilename(file.getAbsolutePath());
+    	profile.setFilename(file.getName());
     	analyzePersonalData(rootNode, profile);
     	analyzeDegrees(rootNode, profile);
     	analyzeLanguages(rootNode, profile);
@@ -177,29 +181,76 @@ public class CogitoAnalyzer {
 			if(experience.getPOSITIONS().size() == 0) {
 				continue;
 			}
-			List<String> occupations = new ArrayList<>();
-			String position = String.join(",", experience.getPOSITIONS());
-			if(Utils.isNotEmpty(position)) {
-				try {
+			//String position = String.join(",", experience.getPOSITIONS());
+			for(String position : experience.getPOSITIONS()) {
+				if(Utils.isNotEmpty(position)) {
+					List<String> occupations = new ArrayList<>();
 					List<String> iscoCodes = new ArrayList<>();
-					List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 3);
-					for(TextDoc textDoc : iscoGroupTextList) {
-						if(textDoc.getScore() < 4.5) {
+					try {
+						List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 3);
+						for(TextDoc textDoc : iscoGroupTextList) {
+							if(textDoc.getScore() < 4.5) {
+								continue;
+							}
+							String iscoCode = textDoc.getFields().get("iscoGroup");
+							iscoCodes.add(iscoCode);
+						}
+					} catch (Exception e) {
+						logger.warn("addOccupations error:{}", e.getMessage());
+					}
+					List<String> iscoCodeGroup = new ArrayList<>();
+					for(String iscoCode : iscoCodes) {
+						if(iscoCode.length() < 3) {
 							continue;
 						}
-						String iscoCode = textDoc.getFields().get("iscoGroup");
-						iscoCodes.add(iscoCode);
+						iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
+						if(!iscoCodeGroup.contains(iscoCode)) {
+							iscoCodeGroup.add(iscoCode);
+						}
 					}
-					for(String iscoCode : iscoCodes) {
-						List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 5);
-						addOccupation(experience, occupations, occupationTextList);
+					List<TextDoc> occupationTextListTotal = new ArrayList<TextDoc>(); 
+					for(String iscoCode : iscoCodeGroup) {
+						List<TextDoc> occupationTextList = null;
+						try {
+							occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 5);
+							occupationTextListTotal.addAll(occupationTextList);
+						} catch (Exception e) {
+							logger.warn("addOccupations error:{}", e.getMessage());
+						}
+					}
+					Collections.sort(occupationTextListTotal, new Comparator<TextDoc>() {
+						@Override
+						public int compare(TextDoc arg0, TextDoc arg1) {
+							int result;
+							if(arg0.getScore() == arg1.getScore()) {
+								result = 0;
+							} else if(arg0.getScore() < arg1.getScore()) {
+								result = -1;
+							} else {
+								result = 1;
+							}
+							return result;
+						}
+					});
+					Collections.reverse(occupationTextListTotal);
+					int count = 0;
+					for(TextDoc textDoc : occupationTextListTotal) {
+						if(addOccupation(experience, occupations, textDoc)) {
+							count++;
+						}
+						if(count >= 5) {
+							break;
+						}
 					}
 					if(occupations.size() == 0) {
-						List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, null, 5);
+						List<TextDoc> occupationTextList = null;
+						try {
+							occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, null, 5);
+						} catch (ParseException | IOException e) {
+							logger.warn("addOccupations error:{}", e.getMessage());
+						}
 						addOccupation(experience, occupations, occupationTextList);
 					}
-				} catch (Exception e) {
-					logger.warn("addOccupations error:{}", e.getMessage());
 				}
 			}
 			logger.info("addOccupations:{}", Utils.writeJson(experience));
@@ -208,23 +259,28 @@ public class CogitoAnalyzer {
 
 	private void addOccupation(WorkExperience experience, List<String> occupations, List<TextDoc> occupationTextList) {
 		for(TextDoc textDoc : occupationTextList) {
-			if(textDoc.getScore() < 4.5) {
-				continue;
-			}
-			String uri = textDoc.getFields().get("uri");
-			if(!occupations.contains(uri)) {
-				Optional<Occupation> optional = occupationRepository.findById(uri);
-				if(optional.isPresent()) {
-					Occupation occupation = optional.get();
-					occupations.add(occupation.getUri());
-					ResourceLink link = new ResourceLink();
-					link.setUri(occupation.getUri());
-					link.setConceptType(occupation.getConceptType());
-					link.setPreferredLabel(occupation.getPreferredLabel());
-					experience.getOccupationsLink().add(link);
-				}
-			}
+			addOccupation(experience, occupations, textDoc);
 		}
 	}
-
+	
+	private boolean addOccupation(WorkExperience experience, List<String> occupations, TextDoc textDoc) {
+		if(textDoc.getScore() < 4.5) {
+			return false;
+		}
+		String uri = textDoc.getFields().get("uri");
+		if(!occupations.contains(uri)) {
+			Optional<Occupation> optional = occupationRepository.findById(uri);
+			if(optional.isPresent()) {
+				Occupation occupation = optional.get();
+				occupations.add(occupation.getUri());
+				ResourceLink link = new ResourceLink();
+				link.setUri(occupation.getUri());
+				link.setConceptType(occupation.getConceptType());
+				link.setPreferredLabel(occupation.getPreferredLabel());
+				experience.getOccupationsLink().add(link);
+				return true;
+			}
+		}
+		return false;
+	}
 }
