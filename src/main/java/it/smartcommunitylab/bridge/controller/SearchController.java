@@ -20,6 +20,7 @@ import it.smartcommunitylab.bridge.model.Course;
 import it.smartcommunitylab.bridge.model.CourseResult;
 import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
+import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.Skill;
 import it.smartcommunitylab.bridge.model.SuggestedCourse;
 import it.smartcommunitylab.bridge.model.TextDoc;
@@ -153,6 +154,13 @@ public class SearchController extends MainController {
 	public Map<String, SuggestedCourse> searchSuggestedCourses() {
 		Map<String, SuggestedCourse> result = resourceMatching.findSuggestedCourses();
 		logger.debug("searchSuggestedCourses:{}", result.size());
+		return result;
+	}
+	
+	@GetMapping(value = "/api/search/suggestedjobs")
+	public List<ResourceLink> searchSuggestedJobs() {
+		List<ResourceLink> result = resourceMatching.findSuggestedJobs();
+		logger.debug("searchSuggestedJobs:{}", result.size());
 		return result;
 	}
 	

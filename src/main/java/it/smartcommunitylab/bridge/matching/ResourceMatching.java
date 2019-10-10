@@ -2,6 +2,7 @@ package it.smartcommunitylab.bridge.matching;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,8 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
@@ -255,5 +258,49 @@ public class ResourceMatching {
 			}
 		}
 	}
-
+	
+	public List<ResourceLink> findSuggestedJobs() {
+		Map<String, ResourceLink> jobMap = new HashMap<>();
+		Map<String, Integer> jobCountMap = new HashMap<>();
+		List<Profile> profiles = profileRepository.findAll();
+		List<JobOffer> jobList = jobOfferRepository.findAll(Sort.by(Direction.DESC, "expirationDate"));
+		Date now = new Date();
+		for(JobOffer jobOffer : jobList) {
+			if(jobOffer.getExpirationDate().before(now)) {
+				break;
+			}
+			for(ResourceLink link : jobOffer.getOccupationsLink()) {
+				if(!checkOccupation(link.getUri(), profiles)) {
+					if(!jobMap.containsKey(link.getUri())) {
+						jobMap.put(link.getUri(), link);
+						jobCountMap.put(link.getUri(), 1);
+					} else {
+						jobCountMap.put(link.getUri(), jobCountMap.get(link.getUri()) + 1);
+					}
+				}
+			}
+		}
+		List<Entry<String, Integer>> entrySet = new ArrayList<>(jobCountMap.entrySet());
+		entrySet.sort(Entry.comparingByValue());
+		Collections.reverse(entrySet);
+		List<ResourceLink> result = new ArrayList<>();
+		for(int i=0; (i < entrySet.size() && i < 20); i++) {
+			Entry<String, Integer> entry = entrySet.get(i);
+			ResourceLink link = jobMap.get(entry.getKey());
+			link.setMatching(entry.getValue());
+			result.add(link);
+		}
+		return result;		
+	}
+	
+	private boolean checkOccupation(String occupation, List<Profile> profiles) {
+		for(Profile profile : profiles) {
+			for(String occupationUri : profile.getOccupations()) {
+				if(occupationUri.equals(occupation)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }
