@@ -2,7 +2,6 @@ package it.smartcommunitylab.bridge.matching;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +10,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
@@ -260,22 +257,24 @@ public class ResourceMatching {
 	}
 	
 	public List<ResourceLink> findSuggestedJobs() {
-		Map<String, ResourceLink> jobMap = new HashMap<>();
+		Map<String, Occupation> occupationMap = new HashMap<>();
 		Map<String, Integer> jobCountMap = new HashMap<>();
+		Map<String, ResourceLink> iscoGroupMap = new HashMap<>();
+		List<Occupation> occupationList = occupationRepository.findAll();
+		for(Occupation occupation : occupationList) {
+			occupationMap.put(occupation.getUri(), occupation);
+		}
 		List<Profile> profiles = profileRepository.findAll();
-		List<JobOffer> jobList = jobOfferRepository.findAll(Sort.by(Direction.DESC, "expirationDate"));
-		Date now = new Date();
+		List<JobOffer> jobList = jobOfferRepository.findAll();
 		for(JobOffer jobOffer : jobList) {
-			if(jobOffer.getExpirationDate().before(now)) {
-				break;
-			}
 			for(ResourceLink link : jobOffer.getOccupationsLink()) {
-				if(!checkOccupation(link.getUri(), profiles)) {
-					if(!jobMap.containsKey(link.getUri())) {
-						jobMap.put(link.getUri(), link);
-						jobCountMap.put(link.getUri(), 1);
+				ResourceLink iscoGroupLink = getIscoGroup(link.getUri(), iscoGroupMap, occupationMap);
+				if(iscoGroupLink != null) {
+					int count = checkOccupation(iscoGroupLink.getUri(), profiles, iscoGroupMap, occupationMap);
+					if(!jobCountMap.containsKey(iscoGroupLink.getUri())) {
+						jobCountMap.put(iscoGroupLink.getUri(), count);
 					} else {
-						jobCountMap.put(link.getUri(), jobCountMap.get(link.getUri()) + 1);
+						jobCountMap.put(iscoGroupLink.getUri(), jobCountMap.get(iscoGroupLink.getUri()) + count);
 					}
 				}
 			}
@@ -286,21 +285,67 @@ public class ResourceMatching {
 		List<ResourceLink> result = new ArrayList<>();
 		for(int i=0; (i < entrySet.size() && i < 20); i++) {
 			Entry<String, Integer> entry = entrySet.get(i);
-			ResourceLink link = jobMap.get(entry.getKey());
+			ResourceLink link = iscoGroupMap.get(entry.getKey());
 			link.setMatching(entry.getValue());
 			result.add(link);
 		}
 		return result;		
 	}
 	
-	private boolean checkOccupation(String occupation, List<Profile> profiles) {
-		for(Profile profile : profiles) {
-			for(String occupationUri : profile.getOccupations()) {
-				if(occupationUri.equals(occupation)) {
-					return true;
+	private ResourceLink getIscoGroup(String occupationUri, 
+			Map<String, ResourceLink> iscoGroupMap, Map<String, Occupation> occupationMap) {
+		if(iscoGroupMap.containsKey(occupationUri)) {
+			return iscoGroupMap.get(occupationUri);
+		}
+		Occupation occupation = occupationMap.get(occupationUri);
+		if(occupation != null) {
+			if(occupation.getConceptType().equals(Const.CONCEPT_ISCO_GROUP)) {
+				if(occupation.getIscoCode().length() < 4) {
+					return null;
+				}
+				ResourceLink occupationLink = new ResourceLink();
+				occupationLink.setConceptType(occupation.getConceptType());
+				occupationLink.setUri(occupation.getUri());
+				occupationLink.setPreferredLabel(occupation.getPreferredLabel());
+				iscoGroupMap.put(occupation.getUri(), occupationLink);
+				return occupationLink;
+			} else {
+				String iscoCode = occupation.getIscoCode();
+				String uri = "http://data.europa.eu/esco/isco/C" + iscoCode;
+				Occupation iscoGroupOcc = occupationMap.get(uri);
+				if(iscoGroupOcc != null) {
+					if(iscoGroupMap.containsKey(iscoGroupOcc.getUri())) {
+						return iscoGroupMap.get(iscoGroupOcc.getUri());
+					} else {
+						ResourceLink occupationLink = new ResourceLink();
+						occupationLink.setConceptType(iscoGroupOcc.getConceptType());
+						occupationLink.setUri(iscoGroupOcc.getUri());
+						occupationLink.setPreferredLabel(iscoGroupOcc.getPreferredLabel());
+						iscoGroupMap.put(iscoGroupOcc.getUri(), occupationLink);
+						return occupationLink;					
+					}
 				}
 			}
 		}
-		return false;
+		return null;
+	}
+	
+	private int checkOccupation(String occupation, List<Profile> profiles, 
+			Map<String, ResourceLink> iscoGroupMap, Map<String, Occupation> occupationMap) {
+		int result = 0;
+		for(Profile profile : profiles) {
+			boolean found = false;
+			for(String occupationUri : profile.getOccupations()) {
+				ResourceLink iscoGroupLink = getIscoGroup(occupationUri, iscoGroupMap, occupationMap);
+				if(iscoGroupLink.getUri().equals(occupation)) {
+					found = true;
+					break;
+				}
+			}
+			if(!found) {
+				result++;
+			}
+		}
+		return result;
 	}
 }
