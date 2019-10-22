@@ -2,9 +2,9 @@ package it.smartcommunitylab.bridge.extsource;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,7 +49,7 @@ public class CogitoAnalyzer {
 	
 	@Autowired
 	OccupationRepository occupationRepository;
-
+	
 	public void analyzeCourse(Course course) {
 		try {
 			String jsonString = HTTPUtils.post(trainingOffersAnalyzerURL, course.getContent(), null, null, null);
@@ -185,71 +185,34 @@ public class CogitoAnalyzer {
 			for(String position : experience.getPOSITIONS()) {
 				if(Utils.isNotEmpty(position)) {
 					List<String> occupations = new ArrayList<>();
-					List<String> iscoCodes = new ArrayList<>();
+					String iscoCode = null;
 					try {
-						List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 3);
-						for(TextDoc textDoc : iscoGroupTextList) {
-							if(textDoc.getScore() < 4.5) {
-								continue;
+						List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 1);
+						if(!iscoGroupTextList.isEmpty()) {
+							TextDoc textDoc = iscoGroupTextList.get(0);
+							double roundOff = round(textDoc.getScore(), 1);
+							if(roundOff >= 4.5) {
+								iscoCode = textDoc.getFields().get("iscoGroup");
 							}
-							String iscoCode = textDoc.getFields().get("iscoGroup");
-							iscoCodes.add(iscoCode);
 						}
 					} catch (Exception e) {
 						logger.warn("addOccupations error:{}", e.getMessage());
 					}
-					List<String> iscoCodeGroup = new ArrayList<>();
-					for(String iscoCode : iscoCodes) {
-						if(iscoCode.length() < 3) {
-							continue;
-						}
-						iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
-						if(!iscoCodeGroup.contains(iscoCode)) {
-							iscoCodeGroup.add(iscoCode);
-						}
-					}
-					List<TextDoc> occupationTextListTotal = new ArrayList<TextDoc>(); 
-					for(String iscoCode : iscoCodeGroup) {
-						List<TextDoc> occupationTextList = null;
+					if(Utils.isNotEmpty(iscoCode) && (iscoCode.length() > 3)) {
 						try {
-							occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 5);
-							occupationTextListTotal.addAll(occupationTextList);
+							List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 3);
+							addOccupation(experience, occupations, occupationTextList);
 						} catch (Exception e) {
 							logger.warn("addOccupations error:{}", e.getMessage());
 						}
 					}
-					Collections.sort(occupationTextListTotal, new Comparator<TextDoc>() {
-						@Override
-						public int compare(TextDoc arg0, TextDoc arg1) {
-							int result;
-							if(arg0.getScore() == arg1.getScore()) {
-								result = 0;
-							} else if(arg0.getScore() < arg1.getScore()) {
-								result = -1;
-							} else {
-								result = 1;
-							}
-							return result;
-						}
-					});
-					Collections.reverse(occupationTextListTotal);
-					int count = 0;
-					for(TextDoc textDoc : occupationTextListTotal) {
-						if(addOccupation(experience, occupations, textDoc)) {
-							count++;
-						}
-						if(count >= 5) {
-							break;
-						}
-					}
 					if(occupations.size() == 0) {
-						List<TextDoc> occupationTextList = null;
 						try {
-							occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, null, 5);
+							List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, null, 3);
+							addOccupation(experience, occupations, occupationTextList);
 						} catch (ParseException | IOException e) {
 							logger.warn("addOccupations error:{}", e.getMessage());
 						}
-						addOccupation(experience, occupations, occupationTextList);
 					}
 				}
 			}
@@ -264,7 +227,8 @@ public class CogitoAnalyzer {
 	}
 	
 	private boolean addOccupation(WorkExperience experience, List<String> occupations, TextDoc textDoc) {
-		if(textDoc.getScore() < 4.5) {
+		double roundOff = round(textDoc.getScore(), 1);
+		if(roundOff < 4.5) {
 			return false;
 		}
 		String uri = textDoc.getFields().get("uri");
@@ -282,5 +246,11 @@ public class CogitoAnalyzer {
 			}
 		}
 		return false;
+	}
+	
+	private double round(double value, int places) {
+		BigDecimal bd = new BigDecimal(Double.toString(value));
+    bd = bd.setScale(places, RoundingMode.HALF_UP);
+    return bd.doubleValue();
 	}
 }
