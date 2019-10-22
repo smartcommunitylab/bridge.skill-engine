@@ -45,7 +45,7 @@ public class SearchController extends MainController {
 		} else {
 			result = luceneManager.searchByFields(text, conceptType, null, 20);
 		}
-		logger.debug("searchByLabel:{}/{}", result.size(), text);
+		logger.info("searchByLabel:{}/{}", result.size(), text);
 		return result;
 	}
 	
@@ -70,7 +70,7 @@ public class SearchController extends MainController {
 				result.add(skill);
 			}
 		}
-		logger.debug("searchSkill:{}/{}", result.size(), text);
+		logger.info("searchSkill:{}/{}", result.size(), text);
 		return result;
 	}
 	
@@ -96,7 +96,7 @@ public class SearchController extends MainController {
 				result.add(occupation);
 			}
 		}
-		logger.debug("searchOccupation:{}/{}", result.size(), text);
+		logger.info("searchOccupation:{}/{}", result.size(), text);
 		return result;
 	}
 	
@@ -107,7 +107,7 @@ public class SearchController extends MainController {
 			@RequestParam double distance,
 			@RequestParam(required = false) List<String> skills) throws Exception {
 		List<Course> result = courseRepository.findByLocation(latitude, longitude, distance, skills);
-		logger.debug("searchCourse:{}/{}/{}/{}", result.size(), latitude + "," + longitude, distance, skills);
+		logger.info("searchCourse:{}/{}/{}/{}", result.size(), latitude + "," + longitude, distance, skills);
 		return result;
 	}
 	
@@ -118,7 +118,7 @@ public class SearchController extends MainController {
 			@RequestParam double distance,
 			@RequestParam(required = false) String iscoCode) throws Exception {
 		List<JobOffer> result = jobOfferRepository.findByLocation(latitude, longitude, distance, iscoCode);
-		logger.debug("searchJobOffer:{}/{}/{}/{}", result.size(), latitude + "," + longitude, distance, iscoCode);
+		logger.info("searchJobOffer:{}/{}/{}/{}", result.size(), latitude + "," + longitude, distance, iscoCode);
 		return result;
 	}
 	
@@ -131,7 +131,7 @@ public class SearchController extends MainController {
 			@RequestParam String extId) throws Exception {
 		List<JobOffer> result = resourceMatching.findJobOfferByProfile(extId, iscoCode, 
 				latitude, longitude, distance);
-		logger.debug("searchJobOfferByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
+		logger.info("searchJobOfferByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
 				latitude + "," + longitude, distance, iscoCode, extId);
 		return result;
 	}
@@ -145,7 +145,7 @@ public class SearchController extends MainController {
 			@RequestParam String extId) throws Exception {
 		List<CourseResult> result = resourceMatching.findCourseByProfile(extId, occupationUri, 
 				latitude, longitude, distance);
-		logger.debug("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
+		logger.info("searchCourseByProfileAndOccupation:{}/{}/{}/{}/{}", result.size(), 
 				latitude + "," + longitude, distance, occupationUri, extId);
 		return result;
 	}
@@ -153,14 +153,14 @@ public class SearchController extends MainController {
 	@GetMapping(value = "/api/search/suggestedcourses")
 	public Map<String, SuggestedCourse> searchSuggestedCourses() {
 		Map<String, SuggestedCourse> result = resourceMatching.findSuggestedCourses();
-		logger.debug("searchSuggestedCourses:{}", result.size());
+		logger.info("searchSuggestedCourses:{}", result.size());
 		return result;
 	}
 	
 	@GetMapping(value = "/api/search/suggestedjobs")
 	public List<ResourceLink> searchSuggestedJobs() {
 		List<ResourceLink> result = resourceMatching.findSuggestedJobs();
-		logger.debug("searchSuggestedJobs:{}", result.size());
+		logger.info("searchSuggestedJobs:{}", result.size());
 		return result;
 	}
 	
