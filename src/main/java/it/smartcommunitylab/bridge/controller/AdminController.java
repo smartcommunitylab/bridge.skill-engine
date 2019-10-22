@@ -115,7 +115,7 @@ public class AdminController extends MainController {
 		if(addProfile) {
 			CogitoProfile cogitoProfileDb = cogitoProfileRepository.findByFilename(file.getName());
 			if(cogitoProfileDb != null) {
-				cogitoProfile.setId(cogitoProfile.getId());
+				cogitoProfile.setId(cogitoProfileDb.getId());
 			}
 			cogitoProfileRepository.save(cogitoProfile);
 			Profile profile = new Profile();
