@@ -57,7 +57,7 @@ public class CogitoAnalyzer {
 			JsonNode tjNode = jsonNode.get("TRAININGS");
 			if(tjNode != null) {
 				for (JsonNode node : tjNode) {
-					String training = node.findValue("TRAININGS").toString();
+					String training = node.toString();
 					if(Utils.isNotEmpty(training)) {
 						course.getCogitoAnalysis().add(training);
 					}
