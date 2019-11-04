@@ -54,12 +54,14 @@ public class CogitoAnalyzer {
 		try {
 			String jsonString = HTTPUtils.post(trainingOffersAnalyzerURL, course.getContent(), null, null, null);
 			JsonNode jsonNode = Utils.readJsonFromString(jsonString);
-			JsonNode tjNode = jsonNode.get("TRAINING_JOB");
-			for (JsonNode node : tjNode) {
-				String training = node.get("TRAINING").asText();
-				if(Utils.isNotEmpty(training)) {
-					course.getCogitoAnalysis().add(training);
-				}
+			JsonNode tjNode = jsonNode.get("TRAININGS");
+			if(tjNode != null) {
+				for (JsonNode node : tjNode) {
+					String training = node.findValue("TRAININGS").toString();
+					if(Utils.isNotEmpty(training)) {
+						course.getCogitoAnalysis().add(training);
+					}
+				}				
 			}
 		} catch (Exception e) {
 			logger.warn("analyzeCourse error:{}", e.getMessage());
@@ -85,6 +87,34 @@ public class CogitoAnalyzer {
 			logger.warn("analyzePersonalData error:{}", e.getMessage());
 		}
 		return null;
+	}
+	
+	private List<String> getMultipleValues(JsonNode jsonNode, String arrayField, String... fields) {
+		List<String> result = new ArrayList<>();
+		JsonNode arrayNode = jsonNode.findValue(arrayField);
+		if(arrayNode != null) {
+			for(JsonNode node : arrayNode) {
+				for(String field : fields) {
+					if(node.hasNonNull(field)) {
+						result.add(node.get(field).asText());
+					}
+				}
+			}							
+		}
+		return result;
+	}
+	
+	private List<JsonNode> mergeArrayNodes(JsonNode jsonNode, String... fields) {
+		List<JsonNode> result = new ArrayList<>();
+		for(String field :  fields) {
+			JsonNode arrayNode = jsonNode.findValue(field);
+			if(arrayNode != null) {
+				for(JsonNode node : arrayNode) {
+					result.add(node);
+				}				
+			}
+		}
+		return result;
 	}
 	
 	private void analyzePersonalData(JsonNode rootNode, 
@@ -115,12 +145,17 @@ public class CogitoAnalyzer {
 	private void analyzeDegrees(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<Degree> degrees = new ArrayList<>();
-		JsonNode jsonNode = rootNode.findValue("DEGREES");
-		if(jsonNode != null) {
-			for(JsonNode node : jsonNode) {
-				Degree degree = Utils.toObject(node, Degree.class);
-				degrees.add(degree);
+		List<JsonNode> mergeNodes = mergeArrayNodes(rootNode, "DEGREES", "DEGREES_NO_CV");
+		for(JsonNode node : mergeNodes) {
+			Degree degree = new Degree();
+			if(node.hasNonNull("DESCRIPTION")) {
+				degree.setDescription(node.get("DESCRIPTION").asText());
 			}
+			degree.setSubjects(getMultipleValues(node, "SUBJECTS", "SUBJECT", "SUBJECT_NO_CV"));
+			degree.setYears(getMultipleValues(node, "YEARS", "YEAR", "YEAR_NO_CV"));
+			degree.setPatenti(getMultipleValues(node, "PATENTI", "PATENTE"));
+			degree.setOrganizations(getMultipleValues(node, "ORGANIZATIONS", "ORGANIZATION", "ORGANIZATION_NO_CV"));
+			degrees.add(degree);
 		}
 		if(degrees.size() > 0) {
 			profile.setDegrees(degrees);
@@ -145,11 +180,9 @@ public class CogitoAnalyzer {
 	private void analyzeITKnowledges(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<String> itKnowledges = new ArrayList<>();
-		JsonNode jsonNode = rootNode.findValue("IT_KNOWLEDGE");
-		if(jsonNode != null) {
-			for(JsonNode node : jsonNode) {
-				itKnowledges.add(node.textValue());
-			}
+		List<JsonNode> mergeNodes = mergeArrayNodes(rootNode, "IT_KNOWLEDGE", "IT_KNOWLEDGE_NO_CV");
+		for(JsonNode node : mergeNodes) {
+			itKnowledges.add(node.textValue());
 		}
 		if(itKnowledges.size() > 0) {
 			profile.setItKnowledges(itKnowledges);
