@@ -2,11 +2,14 @@ package it.smartcommunitylab.bridge.repository;
 
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -17,6 +20,11 @@ import it.smartcommunitylab.bridge.model.Occupation;
 public class OccupationRepositoryCustomImpl implements OccupationRepositoryCustom {
 	@Autowired
 	private MongoTemplate mongoTemplate;
+	
+	@PostConstruct
+	public void init() {
+		mongoTemplate.indexOps(Occupation.class).ensureIndex(new Index().on("iscoCode", Direction.ASC));
+	}
 
 	@Override
 	public List<Occupation> findOccupation(boolean iscoGroup, String iscoCode, 

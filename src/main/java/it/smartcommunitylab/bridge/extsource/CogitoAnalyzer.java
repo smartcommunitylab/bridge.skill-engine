@@ -1,10 +1,14 @@
 package it.smartcommunitylab.bridge.extsource;
 
 import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,17 +49,19 @@ public class CogitoAnalyzer {
 	
 	@Autowired
 	OccupationRepository occupationRepository;
-
+	
 	public void analyzeCourse(Course course) {
 		try {
 			String jsonString = HTTPUtils.post(trainingOffersAnalyzerURL, course.getContent(), null, null, null);
 			JsonNode jsonNode = Utils.readJsonFromString(jsonString);
-			JsonNode tjNode = jsonNode.get("TRAINING_JOB");
-			for (JsonNode node : tjNode) {
-				String training = node.get("TRAINING").asText();
-				if(Utils.isNotEmpty(training)) {
-					course.getCogitoAnalysis().add(training);
-				}
+			JsonNode tjNode = jsonNode.get("TRAININGS");
+			if(tjNode != null) {
+				for (JsonNode node : tjNode) {
+					String training = node.toString();
+					if(Utils.isNotEmpty(training)) {
+						course.getCogitoAnalysis().add(training);
+					}
+				}				
 			}
 		} catch (Exception e) {
 			logger.warn("analyzeCourse error:{}", e.getMessage());
@@ -67,7 +73,7 @@ public class CogitoAnalyzer {
     	String json = HTTPUtils.uploadMultipartFile(personalDataAnalyzerURL + "all_by_file", file);
     	JsonNode rootNode = Utils.readJsonFromString(json);
     	CogitoProfile profile = new CogitoProfile();
-    	profile.setFilename(file.getAbsolutePath());
+    	profile.setFilename(file.getName());
     	analyzePersonalData(rootNode, profile);
     	analyzeDegrees(rootNode, profile);
     	analyzeLanguages(rootNode, profile);
@@ -81,6 +87,34 @@ public class CogitoAnalyzer {
 			logger.warn("analyzePersonalData error:{}", e.getMessage());
 		}
 		return null;
+	}
+	
+	private List<String> getMultipleValues(JsonNode jsonNode, String arrayField, String... fields) {
+		List<String> result = new ArrayList<>();
+		JsonNode arrayNode = jsonNode.findValue(arrayField);
+		if(arrayNode != null) {
+			for(JsonNode node : arrayNode) {
+				for(String field : fields) {
+					if(node.hasNonNull(field)) {
+						result.add(node.get(field).asText());
+					}
+				}
+			}							
+		}
+		return result;
+	}
+	
+	private List<JsonNode> mergeArrayNodes(JsonNode jsonNode, String... fields) {
+		List<JsonNode> result = new ArrayList<>();
+		for(String field :  fields) {
+			JsonNode arrayNode = jsonNode.findValue(field);
+			if(arrayNode != null) {
+				for(JsonNode node : arrayNode) {
+					result.add(node);
+				}				
+			}
+		}
+		return result;
 	}
 	
 	private void analyzePersonalData(JsonNode rootNode, 
@@ -111,12 +145,17 @@ public class CogitoAnalyzer {
 	private void analyzeDegrees(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<Degree> degrees = new ArrayList<>();
-		JsonNode jsonNode = rootNode.findValue("DEGREES");
-		if(jsonNode != null) {
-			for(JsonNode node : jsonNode) {
-				Degree degree = Utils.toObject(node, Degree.class);
-				degrees.add(degree);
+		List<JsonNode> mergeNodes = mergeArrayNodes(rootNode, "DEGREES", "DEGREES_NO_CV");
+		for(JsonNode node : mergeNodes) {
+			Degree degree = new Degree();
+			if(node.hasNonNull("DESCRIPTION")) {
+				degree.setDescription(node.get("DESCRIPTION").asText());
 			}
+			degree.setSubjects(getMultipleValues(node, "SUBJECTS", "SUBJECT", "SUBJECT_NO_CV"));
+			degree.setYears(getMultipleValues(node, "YEARS", "YEAR", "YEAR_NO_CV"));
+			degree.setPatenti(getMultipleValues(node, "PATENTI", "PATENTE"));
+			degree.setOrganizations(getMultipleValues(node, "ORGANIZATIONS", "ORGANIZATION", "ORGANIZATION_NO_CV"));
+			degrees.add(degree);
 		}
 		if(degrees.size() > 0) {
 			profile.setDegrees(degrees);
@@ -141,11 +180,9 @@ public class CogitoAnalyzer {
 	private void analyzeITKnowledges(JsonNode rootNode, 
 			CogitoProfile profile) throws Exception {
 		List<String> itKnowledges = new ArrayList<>();
-		JsonNode jsonNode = rootNode.findValue("IT_KNOWLEDGE");
-		if(jsonNode != null) {
-			for(JsonNode node : jsonNode) {
-				itKnowledges.add(node.textValue());
-			}
+		List<JsonNode> mergeNodes = mergeArrayNodes(rootNode, "IT_KNOWLEDGE", "IT_KNOWLEDGE_NO_CV");
+		for(JsonNode node : mergeNodes) {
+			itKnowledges.add(node.textValue());
 		}
 		if(itKnowledges.size() > 0) {
 			profile.setItKnowledges(itKnowledges);
@@ -177,28 +214,39 @@ public class CogitoAnalyzer {
 			if(experience.getPOSITIONS().size() == 0) {
 				continue;
 			}
-			List<String> occupations = new ArrayList<>();
+			//String position = String.join(",", experience.getPOSITIONS());
 			for(String position : experience.getPOSITIONS()) {
-				try {
-					List<String> iscoCodes = new ArrayList<>();
-					List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 3);
-					for(TextDoc textDoc : iscoGroupTextList) {
-						if(textDoc.getScore() < 4.5) {
-							continue;
+				if(Utils.isNotEmpty(position)) {
+					List<String> occupations = new ArrayList<>();
+					String iscoCode = null;
+					try {
+						List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 1);
+						if(!iscoGroupTextList.isEmpty()) {
+							TextDoc textDoc = iscoGroupTextList.get(0);
+							double roundOff = round(textDoc.getScore(), 1);
+							if(roundOff >= 4.5) {
+								iscoCode = textDoc.getFields().get("iscoGroup");
+							}
 						}
-						String iscoCode = textDoc.getFields().get("iscoGroup");
-						iscoCodes.add(iscoCode);
+					} catch (Exception e) {
+						logger.warn("addOccupations error:{}", e.getMessage());
 					}
-					for(String iscoCode : iscoCodes) {
-						List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 5);
-						addOccupation(experience, occupations, occupationTextList);
+					if(Utils.isNotEmpty(iscoCode) && (iscoCode.length() > 3)) {
+						try {
+							List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, iscoCode, 3);
+							addOccupation(experience, occupations, occupationTextList);
+						} catch (Exception e) {
+							logger.warn("addOccupations error:{}", e.getMessage());
+						}
 					}
 					if(occupations.size() == 0) {
-						List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, null, 5);
-						addOccupation(experience, occupations, occupationTextList);
+						try {
+							List<TextDoc> occupationTextList = luceneManager.searchByFields(position, Const.CONCEPT_OCCCUPATION, null, 3);
+							addOccupation(experience, occupations, occupationTextList);
+						} catch (ParseException | IOException e) {
+							logger.warn("addOccupations error:{}", e.getMessage());
+						}
 					}
-				} catch (Exception e) {
-					logger.warn("addOccupations error:{}", e.getMessage());
 				}
 			}
 			logger.info("addOccupations:{}", Utils.writeJson(experience));
@@ -207,23 +255,35 @@ public class CogitoAnalyzer {
 
 	private void addOccupation(WorkExperience experience, List<String> occupations, List<TextDoc> occupationTextList) {
 		for(TextDoc textDoc : occupationTextList) {
-			if(textDoc.getScore() < 4.5) {
-				continue;
-			}
-			String uri = textDoc.getFields().get("uri");
-			if(!occupations.contains(uri)) {
-				Optional<Occupation> optional = occupationRepository.findById(uri);
-				if(optional.isPresent()) {
-					Occupation occupation = optional.get();
-					occupations.add(occupation.getUri());
-					ResourceLink link = new ResourceLink();
-					link.setUri(occupation.getUri());
-					link.setConceptType(occupation.getConceptType());
-					link.setPreferredLabel(occupation.getPreferredLabel());
-					experience.getOccupationsLink().add(link);
-				}
-			}
+			addOccupation(experience, occupations, textDoc);
 		}
 	}
-
+	
+	private boolean addOccupation(WorkExperience experience, List<String> occupations, TextDoc textDoc) {
+		double roundOff = round(textDoc.getScore(), 1);
+		if(roundOff < 4.5) {
+			return false;
+		}
+		String uri = textDoc.getFields().get("uri");
+		if(!occupations.contains(uri)) {
+			Optional<Occupation> optional = occupationRepository.findById(uri);
+			if(optional.isPresent()) {
+				Occupation occupation = optional.get();
+				occupations.add(occupation.getUri());
+				ResourceLink link = new ResourceLink();
+				link.setUri(occupation.getUri());
+				link.setConceptType(occupation.getConceptType());
+				link.setPreferredLabel(occupation.getPreferredLabel());
+				experience.getOccupationsLink().add(link);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private double round(double value, int places) {
+		BigDecimal bd = new BigDecimal(Double.toString(value));
+    bd = bd.setScale(places, RoundingMode.HALF_UP);
+    return bd.doubleValue();
+	}
 }

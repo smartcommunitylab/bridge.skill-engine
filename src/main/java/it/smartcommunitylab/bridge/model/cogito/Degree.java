@@ -1,70 +1,44 @@
 package it.smartcommunitylab.bridge.model.cogito;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Degree {
-	@JsonProperty("LEVEL")
-	private String LEVEL;
+	private List<String> subjects = new ArrayList<>();	
+	private List<String> years = new ArrayList<>();
+	private String description;
+	private List<String> patenti = new ArrayList<>();
+	private List<String> organizations = new ArrayList<>();
 	
-	@JsonProperty("SUBJECT")
-	private String SUBJECT;
+	public List<String> getSubjects() {
+		return subjects;
+	}
+	public void setSubjects(List<String> subjects) {
+		this.subjects = subjects;
+	}
+	public List<String> getYears() {
+		return years;
+	}
+	public void setYears(List<String> years) {
+		this.years = years;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public List<String> getPatenti() {
+		return patenti;
+	}
+	public void setPatenti(List<String> patenti) {
+		this.patenti = patenti;
+	}
+	public List<String> getOrganizations() {
+		return organizations;
+	}
+	public void setOrganizations(List<String> organizations) {
+		this.organizations = organizations;
+	}
 	
-	@JsonProperty("YEAR")
-	private String YEAR;
-	
-	@JsonProperty("SCORE")
-	private String SCORE;
-	
-	@JsonProperty("DESCRIPTION")
-	private String DESCRIPTION;
-	
-	@JsonProperty("PATENTE")
-	private String PATENTE;
-	
-	@JsonProperty("FORMATION")
-	private String FORMATION;
-	
-	public String getLEVEL() {
-		return LEVEL;
-	}
-	public void setLEVEL(String lEVEL) {
-		LEVEL = lEVEL;
-	}
-	public String getSUBJECT() {
-		return SUBJECT;
-	}
-	public void setSUBJECT(String sUBJECT) {
-		SUBJECT = sUBJECT;
-	}
-	public String getYEAR() {
-		return YEAR;
-	}
-	public void setYEAR(String yEAR) {
-		YEAR = yEAR;
-	}
-	public String getSCORE() {
-		return SCORE;
-	}
-	public void setSCORE(String sCORE) {
-		SCORE = sCORE;
-	}
-	public String getDESCRIPTION() {
-		return DESCRIPTION;
-	}
-	public void setDESCRIPTION(String dESCRIPTION) {
-		DESCRIPTION = dESCRIPTION;
-	}
-	public String getPATENTE() {
-		return PATENTE;
-	}
-	public void setPATENTE(String pATENTE) {
-		PATENTE = pATENTE;
-	}
-	public String getFORMATION() {
-		return FORMATION;
-	}
-	public void setFORMATION(String fORMATION) {
-		FORMATION = fORMATION;
-	}
-
 }

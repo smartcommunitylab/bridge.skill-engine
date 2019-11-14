@@ -1,5 +1,7 @@
 package it.smartcommunitylab.bridge.repository;
 
+import java.util.List;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -10,5 +12,6 @@ import it.smartcommunitylab.bridge.model.Course;
 public interface CourseRepository extends MongoRepository<Course, String>, CourseRepositoryCustom {
 	@Query(value="{extUri:?0}")
 	Course findByExtUri(String extUri);
-
+	
+	List<Course> findBySkillsIn(List<String> skills);
 }

@@ -23,6 +23,7 @@ import it.smartcommunitylab.bridge.exception.UnauthorizedException;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.Skill;
+import it.smartcommunitylab.bridge.repository.CogitoProfileRepository;
 import it.smartcommunitylab.bridge.repository.CourseRepository;
 import it.smartcommunitylab.bridge.repository.JobOfferRepository;
 import it.smartcommunitylab.bridge.repository.OccupationRepository;
@@ -43,6 +44,8 @@ public class MainController {
 	CourseRepository courseRepository;
 	@Autowired
 	ProfileRepository profileRepository;
+	@Autowired
+	CogitoProfileRepository cogitoProfileRepository;
 	
 	public List<ResourceLink> completeSkillLink(List<String> skills) {
 		List<ResourceLink> result = new ArrayList<>();

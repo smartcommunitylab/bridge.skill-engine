@@ -29,5 +29,6 @@ public interface OccupationRepository extends MongoRepository<Occupation, String
 	@Query(value="{uri:{$in:?0}}")
 	List<Occupation> findByIds(List<String> ids);
 	
-
+	@Query(value="{conceptType:?0, iscoCode:?1}")
+	Occupation findByTypeAndIscoCode(String conceptType, String iscoCode); 
 }
