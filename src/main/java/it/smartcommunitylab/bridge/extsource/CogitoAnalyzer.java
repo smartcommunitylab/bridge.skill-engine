@@ -2,8 +2,6 @@ package it.smartcommunitylab.bridge.extsource;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +20,7 @@ import it.smartcommunitylab.bridge.common.HTTPUtils;
 import it.smartcommunitylab.bridge.common.Utils;
 import it.smartcommunitylab.bridge.lucene.LuceneManager;
 import it.smartcommunitylab.bridge.model.Course;
+import it.smartcommunitylab.bridge.model.JobOffer;
 import it.smartcommunitylab.bridge.model.Occupation;
 import it.smartcommunitylab.bridge.model.ResourceLink;
 import it.smartcommunitylab.bridge.model.TextDoc;
@@ -56,15 +55,45 @@ public class CogitoAnalyzer {
 			JsonNode jsonNode = Utils.readJsonFromString(jsonString);
 			JsonNode tjNode = jsonNode.get("TRAININGS");
 			if(tjNode != null) {
-				for (JsonNode node : tjNode) {
-					String training = node.toString();
-					if(Utils.isNotEmpty(training)) {
-						course.getCogitoAnalysis().add(training);
+				for (JsonNode tnode : tjNode) {
+					JsonNode tList = tnode.get("TRAININGS");
+					for(JsonNode node : tList) {
+						String training = node.textValue();
+						if(Utils.isNotEmpty(training)) {
+							training = training.toLowerCase();
+							if(!course.getCogitoAnalysis().contains(training)) {
+								course.getCogitoAnalysis().add(training);
+							}
+						}
 					}
 				}				
 			}
 		} catch (Exception e) {
 			logger.warn("analyzeCourse error:{}", e.getMessage());
+		}
+	}
+	
+	public void analyzeJobOffer(JobOffer jobOffer) {
+		try {
+			String jsonString = HTTPUtils.post(trainingOffersAnalyzerURL, jobOffer.getDescription(), null, null, null);
+			JsonNode jsonNode = Utils.readJsonFromString(jsonString);
+			JsonNode tjNode = jsonNode.get("JOB_OFFERS");
+			if(tjNode != null) {
+				for (JsonNode tnode : tjNode) {
+					JsonNode tList = tnode.get("OFFERS");
+					for(JsonNode node : tList) {
+						String offer = node.textValue();
+						if(Utils.isNotEmpty(offer)) {
+							offer = offer.toLowerCase();
+							if(!jobOffer.getCogitoAnalysis().contains(offer)) {
+								jobOffer.getCogitoAnalysis().add(offer);
+							}
+						}
+					}
+				}				
+			}
+		} catch (Exception e) {
+			logger.warn("analyzeJobOffer error:{}", e.getMessage());
 		}
 	}
 	
@@ -223,7 +252,7 @@ public class CogitoAnalyzer {
 						List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(position, Const.CONCEPT_ISCO_GROUP, null, 1);
 						if(!iscoGroupTextList.isEmpty()) {
 							TextDoc textDoc = iscoGroupTextList.get(0);
-							double roundOff = round(textDoc.getScore(), 1);
+							double roundOff = Utils.round(textDoc.getScore(), 1);
 							if(roundOff >= 4.5) {
 								iscoCode = textDoc.getFields().get("iscoGroup");
 							}
@@ -260,7 +289,7 @@ public class CogitoAnalyzer {
 	}
 	
 	private boolean addOccupation(WorkExperience experience, List<String> occupations, TextDoc textDoc) {
-		double roundOff = round(textDoc.getScore(), 1);
+		double roundOff = Utils.round(textDoc.getScore(), 1);
 		if(roundOff < 4.5) {
 			return false;
 		}
@@ -281,9 +310,4 @@ public class CogitoAnalyzer {
 		return false;
 	}
 	
-	private double round(double value, int places) {
-		BigDecimal bd = new BigDecimal(Double.toString(value));
-    bd = bd.setScale(places, RoundingMode.HALF_UP);
-    return bd.doubleValue();
-	}
 }

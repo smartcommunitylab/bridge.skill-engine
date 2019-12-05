@@ -22,10 +22,9 @@ public class JobOffer {
 	private String workContract;
 	private String workPlace;
 	private double[] geocoding; // lon,lat
-	
 	private List<String> occupations = new ArrayList<>();
 	private List<ResourceLink> occupationsLink = new ArrayList<>();
-	
+	private List<String> cogitoAnalysis = new ArrayList<>();
 	
 	public String getId() {
 		return id;
@@ -122,6 +121,12 @@ public class JobOffer {
 	}
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	public List<String> getCogitoAnalysis() {
+		return cogitoAnalysis;
+	}
+	public void setCogitoAnalysis(List<String> cogitoAnalysis) {
+		this.cogitoAnalysis = cogitoAnalysis;
 	}
 
 }
