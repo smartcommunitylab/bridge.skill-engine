@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -120,5 +122,11 @@ public class Utils {
 		} else {
 			files.add(parentNode);
 		}
+	}
+	
+	public static double round(double value, int places) {
+		BigDecimal bd = new BigDecimal(Double.toString(value));
+    bd = bd.setScale(places, RoundingMode.HALF_UP);
+    return bd.doubleValue();
 	}
 }

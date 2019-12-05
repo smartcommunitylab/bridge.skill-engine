@@ -74,23 +74,34 @@ public class ResourceMatching {
 		if(profile == null) {
 			throw new EntityNotFoundException("profile not found");
 		}
-		iscoCode = iscoCode.length() > 3 ? iscoCode.substring(0, 3) : iscoCode;
-		List<JobOffer> offers = jobOfferRepository.findByLocation(latitude, longitude, distance, iscoCode);
-		for(JobOffer jobOffer : offers) {
-			for(ResourceLink resourceLink : jobOffer.getOccupationsLink()) {
-				if(resourceLink.getConceptType().equals(Const.CONCEPT_ISCO_GROUP)) {
-					continue;
-				}
-				Optional<Occupation> optionalOcc = occupationRepository.findById(resourceLink.getUri());
-				if(optionalOcc.isPresent()) {
-					Occupation occ = optionalOcc.get();
-					resourceLink.setMatching(checkSkillMatching(occ.getHasEssentialSkill(), profile));
-				}
+		List<JobOffer> offers = new ArrayList<JobOffer>();
+		List<JobOffer> offerList = jobOfferRepository.findByLocation(latitude, longitude, distance, iscoCode);
+		for(JobOffer jobOffer : offerList) {
+			if(checkOccupationMatching(jobOffer, iscoCode, profile)) {
+				offers.add(jobOffer);
 			}
 		}		
 		return offers;
 	}
 	
+	private boolean checkOccupationMatching(JobOffer jobOffer, String iscoCode, Profile profile) {
+		boolean result = false;
+		for(ResourceLink resourceLink : jobOffer.getOccupationsLink()) {
+			if(resourceLink.getConceptType().equals(Const.CONCEPT_ISCO_GROUP)) {
+				continue;
+			}
+			Optional<Occupation> optionalOcc = occupationRepository.findById(resourceLink.getUri());
+			if(optionalOcc.isPresent()) {
+				Occupation occ = optionalOcc.get();
+				if(occ.getIscoCode().startsWith(iscoCode)) {
+					result = true;
+					resourceLink.setMatching(checkSkillMatching(occ.getHasEssentialSkill(), profile));
+				}
+			}
+		}
+		return result;
+	}
+
 	public List<CourseResult> findCourseByProfile(String profileExtId, String uri, 
 			double latitude, double longitude, double distance) throws Exception {
 		Profile profile = profileRepository.findByExtId(profileExtId);

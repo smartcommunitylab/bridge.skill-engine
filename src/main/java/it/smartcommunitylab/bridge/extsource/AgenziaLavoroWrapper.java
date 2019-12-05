@@ -1,6 +1,7 @@
 package it.smartcommunitylab.bridge.extsource;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -62,63 +64,6 @@ public class AgenziaLavoroWrapper {
 	SimpleDateFormat sdfJobOffer = new SimpleDateFormat("dd-MM-yyyy");
 	SimpleDateFormat sdfCourse = new SimpleDateFormat("dd/MM/yyyy");
 
-	public int getCourses() throws Exception {
-		URL url = new URL("https://formazionexte.agenzialavoro.tn.it/facetsearch/datatable_search/corso_adl/titolo/tipologia/125?draw=8&query=*&length=200");
-		HttpURLConnection con = (HttpURLConnection) url.openConnection();
-		con.setRequestMethod("GET");
-		con.setConnectTimeout(5000);
-		con.setReadTimeout(5000);
-		Reader streamReader = null;
-		int status = con.getResponseCode();
-		if (status > 299) {
-	    streamReader = new InputStreamReader(con.getErrorStream());
-		} else {
-	    streamReader = new InputStreamReader(con.getInputStream());
-		}
-		BufferedReader in = new BufferedReader(streamReader);
-		String inputLine;
-		StringBuffer content = new StringBuffer();
-		while ((inputLine = in.readLine()) != null) {
-			content.append(inputLine);
-		}
-		in.close();
-		con.disconnect();
-		if(status > 299) {
-			logger.info("getCourses error:{}/{}", status, content.toString());
-			return 0;
-		}
-		int stored = 0;
-		JsonNode jsonNode = Utils.readJsonFromString(content.toString());
-		if(jsonNode.hasNonNull("data") && jsonNode.get("data").isArray()) {
-			for(JsonNode node : jsonNode.get("data")) {
-				if(node.isArray()) {
-					ArrayNode arrayNode = (ArrayNode)node;
-					if(arrayNode.size() >=  1) {
-						String html = arrayNode.get(0).asText();
-						Document document = Jsoup.parse(html);
-						Element element = document.selectFirst("a");
-						if(element != null) {
-							String href = element.attr("href");
-							try {
-								Course course = getCourse(href);
-								Course courseDb = courseRepository.findByExtUri(href);
-								if(courseDb != null) {
-									course.setId(courseDb.getId());
-								}
-								courseRepository.save(course);
-								logger.info("getCourses:{}", href);
-								stored++;
-							} catch (Exception e) {
-								logger.info("getCourse error:{}/{}", href, e.getMessage());
-							}
-						}
-					}
-				}
-			}
-		}
-		return stored;
-	}
-	
 	public Course getCourse(String href) throws Exception {
 		URL url = new URL(href);
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -202,25 +147,6 @@ public class AgenziaLavoroWrapper {
 			}
 		}
 		
-		List<String> skills = new ArrayList<>();
-		List<ResourceLink> skillsLink = new ArrayList<>(); 
-		List<TextDoc> skillTextList = luceneManager.searchByFields(title, Const.CONCEPT_SKILL, null, 10);
-		for (TextDoc textDoc : skillTextList) {
-			if(textDoc.getScore() < 4.5) {
-				continue;
-			}
-			Optional<Skill> optional = skillRepository.findById(textDoc.getFields().get("uri"));
-			if(optional.isPresent()) {
-				Skill skill = optional.get();
-				skills.add(skill.getUri());
-				ResourceLink link = new ResourceLink();
-				link.setUri(skill.getUri());
-				link.setConceptType(skill.getConceptType());
-				link.setPreferredLabel(skill.getPreferredLabel());
-				skillsLink.add(link);
-			}
-		}
-		
 		Course course = new Course();
 		course.setExtUri(href);
 		course.setTitle(title);
@@ -231,13 +157,129 @@ public class AgenziaLavoroWrapper {
 		course.setAddress(address);
 		course.setGeocoding(new double[] {longitude, latitude});
 		course.setContent(content.toString());
+		
+		cogitoAnalyzer.analyzeCourse(course);
+		
+		List<String> skills = new ArrayList<>();
+		List<ResourceLink> skillsLink = new ArrayList<>();
+		if(course.getCogitoAnalysis().size() == 0) {
+			extractSkills(skills, skillsLink, title);
+		} else {
+			for(String training : course.getCogitoAnalysis()) {
+				extractSkills(skills, skillsLink, training);
+			}
+		}
 		course.setSkills(skills);
 		course.setSkillsLink(skillsLink);
 		
-		cogitoAnalyzer.analyzeCourse(course);
 		return course;
 	}
+
+	private void extractSkills(List<String> skills, List<ResourceLink> skillsLink, String text)
+			throws ParseException, IOException {
+		List<TextDoc> skillTextList = luceneManager.searchByFields(text, Const.CONCEPT_SKILL, null, 3);
+		for (TextDoc textDoc : skillTextList) {
+			double roundOff = Utils.round(textDoc.getScore(), 1);
+			if(roundOff < 4.5) {
+				continue;
+			}
+			Optional<Skill> optional = skillRepository.findById(textDoc.getFields().get("uri"));
+			if(optional.isPresent()) {
+				Skill skill = optional.get();
+				if(!skills.contains(skill.getUri())) {
+					skills.add(skill.getUri());
+					ResourceLink link = new ResourceLink();
+					link.setUri(skill.getUri());
+					link.setConceptType(skill.getConceptType());
+					link.setPreferredLabel(skill.getPreferredLabel());
+					skillsLink.add(link);
+				}
+			}
+		}
+	}
 	
+	private void extractOccupations(List<String> occupations, List<ResourceLink> occupationsLink,
+			String text, String iscoCode) throws ParseException, IOException {
+		List<TextDoc> occupationTextList = luceneManager.searchByFields(text, Const.CONCEPT_OCCCUPATION, 
+				iscoCode, 3);
+		for (TextDoc textDoc : occupationTextList) {
+			double roundOff = Utils.round(textDoc.getScore(), 1);
+			if(roundOff < 4.5) {
+				continue;
+			}
+			String uri = textDoc.getFields().get("uri");
+			if(!occupations.contains(uri)) {
+				Optional<Occupation> optional = occupationRepository.findById(uri);
+				if(optional.isPresent()) {
+					Occupation occupation = optional.get();
+					occupations.add(uri);
+					ResourceLink link = new ResourceLink();
+					link.setUri(occupation.getUri());
+					link.setConceptType(occupation.getConceptType());
+					link.setPreferredLabel(occupation.getPreferredLabel());
+					occupationsLink.add(link);
+				}
+			}
+		}
+	}
+	
+	public int getCourses() throws Exception {
+		URL url = new URL("https://formazionexte.agenzialavoro.tn.it/facetsearch/datatable_search/corso_adl/titolo/tipologia/125?draw=8&query=*&length=200");
+		HttpURLConnection con = (HttpURLConnection) url.openConnection();
+		con.setRequestMethod("GET");
+		con.setConnectTimeout(5000);
+		con.setReadTimeout(5000);
+		Reader streamReader = null;
+		int status = con.getResponseCode();
+		if (status > 299) {
+	    streamReader = new InputStreamReader(con.getErrorStream());
+		} else {
+	    streamReader = new InputStreamReader(con.getInputStream());
+		}
+		BufferedReader in = new BufferedReader(streamReader);
+		String inputLine;
+		StringBuffer content = new StringBuffer();
+		while ((inputLine = in.readLine()) != null) {
+			content.append(inputLine);
+		}
+		in.close();
+		con.disconnect();
+		if(status > 299) {
+			logger.info("getCourses error:{}/{}", status, content.toString());
+			return 0;
+		}
+		int stored = 0;
+		JsonNode jsonNode = Utils.readJsonFromString(content.toString());
+		if(jsonNode.hasNonNull("data") && jsonNode.get("data").isArray()) {
+			for(JsonNode node : jsonNode.get("data")) {
+				if(node.isArray()) {
+					ArrayNode arrayNode = (ArrayNode)node;
+					if(arrayNode.size() >=  1) {
+						String html = arrayNode.get(0).asText();
+						Document document = Jsoup.parse(html);
+						Element element = document.selectFirst("a");
+						if(element != null) {
+							String href = element.attr("href");
+							try {
+								Course course = getCourse(href);
+								Course courseDb = courseRepository.findByExtUri(href);
+								if(courseDb != null) {
+									course.setId(courseDb.getId());
+								}
+								courseRepository.save(course);
+								logger.info("getCourses:{}", href);
+								stored++;
+							} catch (Exception e) {
+								logger.info("getCourse error:{}/{}", href, e.getMessage());
+							}
+						}
+					}
+				}
+			}
+		}
+		return stored;
+	}
+
 	public JobOffer getJobOffer(String href) throws Exception {
 		URL url = new URL(href);
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -323,25 +365,6 @@ public class AgenziaLavoroWrapper {
 		double latitude = Double.valueOf(javascript.substring(initLat + 20, endLat));
 		double longitude = Double.valueOf(javascript.substring(initLon + 20, endLon));
 		
-		List<String> occupations = new ArrayList<>();
-		List<ResourceLink> occupationsLink = new ArrayList<>();
-		List<TextDoc> iscoGroupTextList = luceneManager.searchByFields(title, Const.CONCEPT_ISCO_GROUP, 
-				iscoCode, 5);
-		List<TextDoc> occupationTextList = luceneManager.searchByFields(title, Const.CONCEPT_OCCCUPATION, 
-				iscoCode, 10);
-		List<Occupation> occupationList = occupationRepository.findByIscoCode("^" + iscoCode);
-		for (Occupation occupation : occupationList) {
-			if(containsUri(iscoGroupTextList, occupation.getUri()) || 
-					containsUri(occupationTextList, occupation.getUri())) {
-				occupations.add(occupation.getUri());
-				ResourceLink link = new ResourceLink();
-				link.setUri(occupation.getUri());
-				link.setConceptType(occupation.getConceptType());
-				link.setPreferredLabel(occupation.getPreferredLabel());
-				occupationsLink.add(link);
-			}
-		}
-		
 		JobOffer jobOffer = new JobOffer();
 		jobOffer.setExtUri(href);
 		jobOffer.setTitle(title);
@@ -364,8 +387,21 @@ public class AgenziaLavoroWrapper {
 			jobOffer.setExpirationDate(expDate);
 		}
 		jobOffer.setGeocoding(new double[] {longitude, latitude});
+		
+		cogitoAnalyzer.analyzeJobOffer(jobOffer);
+		
+		List<String> occupations = new ArrayList<>();
+		List<ResourceLink> occupationsLink = new ArrayList<>();
+		if(jobOffer.getCogitoAnalysis().size() == 0) {
+			extractOccupations(occupations, occupationsLink, title, iscoCode);
+		} else {
+			for(String offer : jobOffer.getCogitoAnalysis()) {
+				extractOccupations(occupations, occupationsLink, offer, iscoCode);
+			}
+		}
 		jobOffer.setOccupations(occupations);
 		jobOffer.setOccupationsLink(occupationsLink);
+		
 		return jobOffer;
 	}
 	
@@ -391,13 +427,13 @@ public class AgenziaLavoroWrapper {
 		return stored;
 	}
 	
-	private boolean containsUri(List<TextDoc> docList, String uri) {
-		for (TextDoc textDoc : docList) {
-			if(textDoc.getFields().get("uri").equals(uri)) {
-				return true;
-			}
-		}
-		return false;
-	}
+//	private boolean containsUri(List<TextDoc> docList, String uri) {
+//		for (TextDoc textDoc : docList) {
+//			if(textDoc.getFields().get("uri").equals(uri)) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 
 }
